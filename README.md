@@ -243,6 +243,12 @@ Demostrar cómo los videojuegos arcade clásicos pueden transformarse en herrami
 Proyecto desarrollado con fines educativos y de experimentación en diseño de videojuegos arcade personalizables.
 
 
+
+
+
+
+
+
 ## 🇬🇧 English
 
 
