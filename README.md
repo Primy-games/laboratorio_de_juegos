@@ -68,14 +68,14 @@ Permite modificar:
 Prueba inmediatamente cualquier configuración creada por el usuario.
 
 ### 📸 Capturas
+
 imagenes/Pac_man1.png
 imagenes/Pac_man2.png
+
 imagenes/Pac_man3.png
+
 imagenes/Pac_man4.png
 
-
-
-\---
 
 ## 🚀 Space Invaders Personalizable
 
