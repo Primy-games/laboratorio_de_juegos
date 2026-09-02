@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Pixel Iso Defense — Editor Avanzado</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  :root{
+    --bg: #0d1117;
+    --panel: #161b22;
+    --line: #2a3140;
+    --accent: #4cc9f0;
+    --accent2: #f7b733;
+    --danger: #ff5566;
+    --ok: #5ee6a0;
+    --text: #d7dee8;
+    --muted: #8ea0b8;
+  }
+
+  * { box-sizing: border-box; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Press Start 2P', monospace;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:16px;
+    -webkit-font-smoothing: none;
+    width: 100vw; height: 100vh; overflow: hidden;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  h1{
+    font-size:14px;
+    letter-spacing:1px;
+    color:var(--accent);
+    text-shadow: 2px 2px 0 #000;
+    margin: 4px 0 12px 0;
+  }
+
+  #tabs{
+    display:flex;
+    gap:6px;
+    margin-bottom:14px;
+    background: var(--panel);
+    border:2px solid var(--line);
+    border-radius:4px;
+    padding:6px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  #tabs button{
+    font-family:'Press Start 2P', monospace;
+    font-size:8px;
+    background: transparent;
+    color: var(--muted);
+    border: 2px solid transparent;
+    padding:8px 10px;
+    cursor:pointer;
+    border-radius:3px;
+  }
+  #tabs button.active{
+    background: var(--bg);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  #tabs button:hover:not(.active){ color: var(--text); }
+
+  .screen{ display:none; flex-direction:column; align-items:center; width:100%; }
+  .screen.active{ display:flex; }
+
+  #wrap{ position:relative; border: 4px solid var(--line); box-shadow: 0 0 0 4px #000, 0 8px 24px rgba(0,0,0,.6); background: #05070a; touch-action: manipulation; }
+  canvas{ 
+    display:block; image-rendering: pixelated;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+  }
+
+  button{
+    font-family:'Press Start 2P', monospace;
+    font-size:8px;
+    background: var(--panel);
+    color: var(--text);
+    border: 2px solid var(--line);
+    padding:8px 10px;
+    cursor:pointer;
+    border-radius:3px;
+    line-height:1.5;
+  }
+  button:hover{ border-color: var(--accent); color:#fff; }
+  button:active{ transform: translateY(1px); }
+  button.selected{ border-color: var(--accent2); box-shadow: 0 0 0 2px var(--accent2) inset; }
+  button:disabled{ opacity:.35; cursor:not-allowed; }
+  
+  .diffBtn{
+    font-family:'Press Start 2P', monospace;
+    font-size:7px;
+    background: transparent;
+    color: var(--text);
+    border: 2px solid var(--line);
+    padding:6px 10px;
+    cursor:pointer;
+    border-radius:3px;
+    transition: all 0.2s ease;
+  }
+  .diffBtn:hover{ 
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  }
+  .diffBtn.selected{ 
+    box-shadow: 0 0 8px currentColor;
+  }
+
+  input[type=number]{
+    font-family:'Press Start 2P', monospace;
+    font-size:7px;
+    width:50px;
+    background:var(--bg);
+    color:var(--text);
+    border:2px solid var(--line);
+    padding:4px;
+    border-radius:3px;
+  }
+
+  textarea{
+    font-family:'Press Start 2P', monospace;
+    font-size:7px;
+    width:100%;
+    max-width:400px;
+    height:60px;
+    background:var(--bg);
+    color:var(--text);
+    border:2px solid var(--line);
+    padding:6px;
+    border-radius:3px;
+    resize:vertical;
+  }
+
+  .msg{ margin-top:8px; font-size:8px; color:var(--muted); height:12px; text-align:center; }
+
+  #hud{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap:wrap;
+    justify-content:center;
+    margin-bottom:10px;
+    font-size:9px;
+    background: var(--panel);
+    border:2px solid var(--line);
+    padding:8px 12px;
+    border-radius:4px;
+  }
+  #hud .val{ color:var(--accent2); }
+  #hud .lives{ color: var(--danger); }
+
+  #towerbar{ display:flex; gap:6px; margin-top:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+
+  #overlay{
+    position:absolute; inset:0;
+    background: rgba(5,7,10,.9);
+    display:none;
+    align-items:center; justify-content:center;
+    flex-direction:column;
+    text-align:center;
+    gap:12px;
+    padding:20px;
+  }
+  #overlay h2{ font-size:14px; text-shadow:2px 2px 0 #000; }
+  #overlay p{ font-size:8px; max-width:300px; line-height:1.6; }
+
+  #levelToolsPanel{
+    display:flex;
+    gap:10px;
+    background: var(--panel);
+    border:2px solid var(--line);
+    padding:12px;
+    border-radius:4px;
+    margin-bottom:10px;
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .toolsTitle{ font-size:8px; color:var(--accent2); margin-bottom:6px; }
+
+  #toolSelector{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+
+  .toolBox{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    cursor:pointer;
+    border:2px solid var(--line);
+    padding:6px 8px;
+    border-radius:3px;
+    background:var(--bg);
+    font-size:6px;
+    text-align:center;
+    min-width:50px;
+    transition: all 0.1s ease;
+  }
+  .toolBox:hover{ border-color:var(--accent); }
+  .toolBox.active{ border-color:var(--accent2); box-shadow:0 0 0 2px var(--accent2) inset; }
+
+  .toolPreview{ width:32px; height:32px; display:flex; align-items:center; justify-content:center; }
+
+  #levelLowerToolbar{ display:flex; gap:6px; flex-wrap:wrap; }
+
+  #configPanel{
+    background: var(--panel);
+    border:2px solid var(--line);
+    padding:14px;
+    border-radius:4px;
+    max-width:500px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .configSection{
+    border:1px solid var(--line);
+    padding:10px;
+    border-radius:3px;
+    background:var(--bg);
+  }
+
+  .configRow{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    font-size:8px;
+    margin-bottom:6px;
+  }
+
+  .configLabel{ min-width:120px; }
+
+  #gameSetupPanel{
+    position:absolute; inset:0;
+    background: rgba(5,7,10,.9);
+    display:none;
+    align-items:center; justify-content:center;
+    flex-direction:column;
+    text-align:center;
+    padding:20px;
+    gap:12px;
+  }
+  #gameSetupPanel h2{ color:var(--accent2); font-size:12px; }
+  #gameSetupPanel p{ font-size:8px; color:var(--muted); max-width:320px; line-height:1.6; }
+
+  .swatch{ display:inline-block; width:6px; height:6px; margin-right:4px; vertical-align:middle; }
+</style>
+</head>
+<body>
+
+<h1>&#9642; PIXEL ISO DEFENSE &#9642;</h1>
+
+<div id="tabs">
+  <button id="tabSprite" class="active">1. SPRITES Y ANIMACIÓN</button>
+  <button id="tabLevel">2. NIVEL</button>
+  <button id="tabConfig">3. CONFIGURACIÓN</button>
+  <button id="tabGame">4. JUGAR</button>
+</div>
+
+<!-- ======================= SPRITE EDITOR ======================= -->
+<div id="spriteScreen" class="screen active">
+  <div id="spriteEditorLayout" style="display:flex; gap:22px; align-items:flex-start; flex-wrap:wrap; justify-content:center; background: var(--panel); border:2px solid var(--line); padding:18px; border-radius:4px;">
+    <div class="col">
+      <div id="spriteTypeBar" style="display:flex; gap:6px; margin-bottom:6px; flex-wrap:wrap; justify-content:center; max-width: 500px;"></div>
+      
+      <div id="frameBar" style="display: flex; gap: 6px; align-items: center; background: var(--bg); padding: 6px; border-radius: 4px; border: 1px solid var(--line); margin-bottom: 8px;">
+        <span class="miniLabel">FRAME:</span>
+        <div id="frameBtnGroup" style="display:flex; gap:4px;"></div>
+        <button id="addFrameBtn" class="frameBtn" style="border-color:var(--ok); padding:4px 8px; font-size:8px;">+</button>
+        <button id="removeFrameBtn" class="frameBtn" style="border-color:var(--danger); padding:4px 8px; font-size:8px;">-</button>
+      </div>
+
+      <canvas id="spriteGridCanvas" style="border:2px solid var(--line); cursor: crosshair;"></canvas>
+      <div class="sizeRow" style="margin-top:8px;">
+        Filas <input id="rowsInput" type="number" min="4" max="14" value="6">
+        Cols <input id="colsInput" type="number" min="4" max="14" value="6">
+        <button id="resizeBtn" style="padding:6px 10px;">APLICAR</button>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="miniLabel">VISTA PREVIA Y ANIMACIÓN</div>
+      <canvas id="spritePreviewCanvas" width="140" height="140" style="border:2px solid var(--line); background:#05070a;"></canvas>
+      <div id="paletteBar" style="display:flex; gap:10px; align-items:center; margin-top:6px; flex-wrap:wrap; justify-content:center;"></div>
+      <button id="resetSpriteBtn" style="margin-top:8px;">RESTAURAR DISEÑO</button>
+      
+      <div style="display: flex; gap: 8px; flex-direction: column; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); width: 100%;">
+        <div class="miniLabel" style="color:var(--accent)">SUBIR SPRITE/FRAME ACTUAL</div>
+        <div style="font-size:7px; color:var(--accent2); text-align:center; line-height:1.4; max-width:200px;">⚠ Dimensiones recomendadas:<br><strong>32x32 px</strong> (Máx. <strong>64x64 px</strong>)</div>
+        <input type="file" id="spriteUpload" accept="image/png, image/jpeg">
+        <button id="removeSpriteBtn" style="display:none; border-color:var(--danger)">QUITAR IMAGEN</button>
+      </div>
+    </div>
+  </div>
+  <div class="msg" id="msgSprite">Edita los sprites, crea frames para animaciones.</div>
+</div>
+
+<!-- ======================= LEVEL EDITOR ======================= -->
+<div id="levelScreen" class="screen">
+  <div id="levelToolsPanel">
+    <div class="toolsTitle">HERRAMIENTAS</div>
+    <div id="toolSelector"></div>
+    <div id="levelLowerToolbar" style="margin-top:8px; border-top:1px solid var(--line); padding-top:8px; width:100%; display:flex; gap:6px; flex-wrap:wrap;">
+      <button id="genRandomBtn" style="border-color:var(--accent2)">🎲 GENERAR ALEATORIO</button>
+      <button id="clearLevelBtn" style="border-color:var(--danger)">🗑️ LIMPIAR TODO</button>
+      <button id="resetLevelBtn" style="border-color:var(--ok)">↺ RESTAURAR ORIGINAL</button>
+      <button id="saveLevelBtn" style="border-color:var(--accent)">💾 GUARDAR NIVEL</button>
+      <button id="loadLevelBtn" style="border-color:var(--accent)">📂 CARGAR NIVEL</button>
+      <input type="file" id="loadLevelUpload" accept=".json" style="display:none;">
+      <button id="downloadTemplateBtn" style="border-color:var(--accent2)">👁️ DESCARGAR PLANTILLA TERRENO</button>
+      <button id="uploadTilesetBtn" style="border-color:var(--ok)">🌍 SUBIR TERRENO</button>
+      <button id="removeTilesetBtn" style="display:none; border-color:var(--danger)">QUITAR TERRENO</button>
+      <input type="file" id="tilesetUpload" accept="image/png, image/jpeg" style="display: none;">
+      <button id="uploadBgBtn" style="border-color:var(--muted)">👀 SUBIR FONDO JUEGO</button>
+      <button id="removeBgBtn" style="display:none; border-color:var(--danger)">QUITAR FONDO</button>
+      <input type="file" id="bgUpload" accept="image/png, image/jpeg" style="display: none;">
+    </div>
+  </div>
+
+  <div id="wrapLevel" style="position:relative; border:4px solid var(--line); box-shadow:0 0 0 4px #000, 0 8px 24px rgba(0,0,0,.6); background:#05070a; margin-bottom:10px;">
+    <canvas id="levelCanvas" width="900" height="560"></canvas>
+  </div>
+
+  <div class="msg" id="msgLevel">Selecciona una herramienta y clickea en el mapa para crear el nivel.</div>
+</div>
+
+<!-- ======================= CONFIG EDITOR ======================= -->
+<div id="configScreen" class="screen">
+  <div id="configPanel">
+    <h2 style="color:var(--accent); margin:0 0 10px 0; font-size:10px;">⚙️ CONFIGURACIÓN DE JUEGO</h2>
+
+    <div class="configSection">
+      <div style="font-size:9px; color:var(--accent2); margin-bottom:8px;">TORRES - VIDA Y DAÑO</div>
+      <div class="configRow">
+        <span class="configLabel">Dardo - Vida:</span>
+        <input type="number" id="towerDardoHp" value="15" min="1" max="100">
+        <span class="configLabel">Daño:</span>
+        <input type="number" id="towerDardoDmg" value="9" min="1" max="50">
+      </div>
+      <div class="configRow">
+        <span class="configLabel">Cañón - Vida:</span>
+        <input type="number" id="towerCanonHp" value="30" min="1" max="100">
+        <span class="configLabel">Daño:</span>
+        <input type="number" id="towerCanonDmg" value="22" min="1" max="50">
+      </div>
+      <div class="configRow">
+        <span class="configLabel">Rayo - Vida:</span>
+        <input type="number" id="towerRayoHp" value="20" min="1" max="100">
+        <span class="configLabel">Daño:</span>
+        <input type="number" id="towerRayoDmg" value="15" min="1" max="50">
+      </div>
+      <div class="configRow">
+        <span class="configLabel">Veneno - Vida:</span>
+        <input type="number" id="towerVenenoHp" value="18" min="1" max="100">
+        <span class="configLabel">Daño:</span>
+        <input type="number" id="towerVenenoDmg" value="8" min="1" max="50">
+      </div>
+    </div>
+
+    <div class="configSection">
+      <div style="font-size:9px; color:var(--accent2); margin-bottom:8px;">TORRES - PRECIO</div>
+      <div class="configRow">
+        <span class="configLabel">Dardo - Costo:</span>
+        <input type="number" id="towerDardoCost" value="40" min="5" max="200">
+      </div>
+      <div class="configRow">
+        <span class="configLabel">Cañón - Costo:</span>
+        <input type="number" id="towerCanonCost" value="90" min="5" max="200">
+      </div>
+      <div class="configRow">
+        <span class="configLabel">Rayo - Costo:</span>
+        <input type="number" id="towerRayoCost" value="70" min="5" max="200">
+      </div>
+      <div class="configRow">
+        <span class="configLabel">Veneno - Costo:</span>
+        <input type="number" id="towerVenenoCost" value="60" min="5" max="200">
+      </div>
+    </div>
+
+    <div class="configSection">
+      <div style="font-size:9px; color:var(--accent2); margin-bottom:8px;">ENEMIGOS - VIDA Y RESISTENCIA</div>
+      <div class="configRow">
+        <span class="configLabel">Scout - Vida:</span>
+        <input type="number" id="scoutHp" value="18" min="1" max="100">
+      </div>
+      <div class="configRow">
+        <span class="configLabel">Grunt - Vida:</span>
+        <input type="number" id="gruntHp" value="40" min="1" max="100">
+      </div>
+      <div class="configRow">
+        <span class="configLabel">Brute - Vida:</span>
+        <input type="number" id="bruteHp" value="110" min="1" max="200">
+      </div>
+    </div>
+
+    <div class="configSection">
+      <div style="font-size:9px; color:var(--accent2); margin-bottom:8px;">ENEMIGOS - ATAQUE A TORRES</div>
+      <div class="configRow">
+        <span class="configLabel">Scout dispara:</span>
+        <input type="checkbox" id="scoutCanAttack" style="width:16px; height:16px;">
+        <span class="configLabel">Daño:</span>
+        <input type="number" id="scoutAttackDmg" value="2" min="0" max="20">
+      </div>
+      <div class="configRow">
+        <span class="configLabel">Grunt dispara:</span>
+        <input type="checkbox" id="gruntCanAttack" style="width:16px; height:16px;">
+        <span class="configLabel">Daño:</span>
+        <input type="number" id="gruntAttackDmg" value="3" min="0" max="20">
+      </div>
+      <div class="configRow">
+        <span class="configLabel">Brute dispara:</span>
+        <input type="checkbox" id="bruteCanAttack" checked style="width:16px; height:16px;">
+        <span class="configLabel">Daño:</span>
+        <input type="number" id="bruteAttackDmg" value="5" min="0" max="20">
+      </div>
+      <div class="configRow">
+        <span class="configLabel">Rango de ataque:</span>
+        <input type="number" id="enemyAttackRange" value="100" min="20" max="300">
+      </div>
+      <div class="configRow">
+        <span class="configLabel">Velocidad de fuego:</span>
+        <input type="number" id="enemyFireRate" value="1.5" min="0.5" max="5" step="0.1">
+      </div>
+      <p style="font-size:8px; color:var(--muted); margin-top:8px; margin-bottom:0;">Nota: El daño al llegar al final (Scout:1, Grunt:1, Brute:2) es fijo.</p>
+    </div>
+
+    <div class="configSection">
+      <div style="font-size:9px; color:var(--accent2); margin-bottom:8px;">ENEMIGOS - VELOCIDAD Y RECOMPENSA</div>
+      <div class="configRow">
+        <span class="configLabel">Scout - Velocidad:</span>
+        <input type="number" id="scoutSpeed" value="95" min="30" max="200">
+        <span class="configLabel">Oro:</span>
+        <input type="number" id="scoutGold" value="4" min="1" max="50">
+      </div>
+      <div class="configRow">
+        <span class="configLabel">Grunt - Velocidad:</span>
+        <input type="number" id="gruntSpeed" value="80" min="30" max="200">
+        <span class="configLabel">Oro:</span>
+        <input type="number" id="gruntGold" value="6" min="1" max="50">
+      </div>
+      <div class="configRow">
+        <span class="configLabel">Brute - Velocidad:</span>
+        <input type="number" id="bruteSpeed" value="50" min="30" max="200">
+        <span class="configLabel">Oro:</span>
+        <input type="number" id="bruteGold" value="15" min="1" max="50">
+      </div>
+    </div>
+
+    <div class="configSection">
+      <div style="font-size:9px; color:var(--accent2); margin-bottom:8px;">CONFIGURACIÓN DE PARTIDA</div>
+      <div class="configRow">
+        <span class="configLabel">Total de oleadas:</span>
+        <input type="number" id="totalWaves" value="10" min="1" max="30">
+      </div>
+      <div class="configRow">
+        <span class="configLabel">Enemigos en oleada 1:</span>
+        <input type="number" id="waveBaseCount" value="5" min="1" max="50">
+      </div>
+      <div class="configRow">
+        <span class="configLabel">Incremento por oleada:</span>
+        <input type="number" id="waveIncrement" value="2" min="0" max="10">
+      </div>
+      <div class="configRow">
+        <span class="configLabel">Dinero inicial:</span>
+        <input type="number" id="initialGold" value="100" min="10" max="500">
+      </div>
+    </div>
+
+    <div class="configSection" style="background: var(--bg); border: 2px solid var(--line); padding: 12px; border-radius: 4px;">
+      <div style="font-size:9px; color:var(--accent2); margin-bottom:8px;">MENSAJES FINALES</div>
+      <label style="font-size:8px; display:block; margin-bottom:4px; color:var(--text);">Mensaje de VICTORIA:</label>
+      <textarea id="victoryMsg" style="font-family:'Press Start 2P', monospace; font-size:7px; width:100%; max-width:400px; height:50px; background:var(--bg); color:var(--text); border:2px solid var(--line); padding:6px; border-radius:3px; resize:vertical;">¡VICTORIA! Sobreviviste todas las oleadas. ¡Eres un maestro de la defensa!</textarea>
+      <label style="font-size:8px; display:block; margin-bottom:4px; margin-top:8px; color:var(--text);">Mensaje de DERROTA:</label>
+      <textarea id="defeatMsg" style="font-family:'Press Start 2P', monospace; font-size:7px; width:100%; max-width:400px; height:50px; background:var(--bg); color:var(--text); border:2px solid var(--line); padding:6px; border-radius:3px; resize:vertical;">GAME OVER. Los enemigos llegaron al final del camino. Intenta de nuevo.</textarea>
+    </div>
+
+    <button id="applyConfigBtn" style="border-color:var(--ok); align-self:center;">✓ GUARDAR CONFIGURACIÓN</button>
+  </div>
+
+  <div class="msg" id="msgConfig">Ajusta los parámetros del juego y presiona GUARDAR.</div>
+</div>
+
+<!-- ======================= GAME ======================= -->
+<div id="gameScreen" class="screen">
+  <div id="hud">
+    <div>OLEADA <span class="val" id="waveLabel">0</span>/<span id="waveTotal">10</span></div>
+    <div>ORO <span class="val" id="goldLabel">100</span></div>
+    <div class="lives">VIDAS <span id="livesLabel">20</span></div>
+  </div>
+
+  <div id="wrap">
+    <canvas id="game" width="900" height="560" style="max-width: 100%; height: auto; display: block;"></canvas>
+    <div id="overlay">
+      <h2 id="overTitle">GAME OVER</h2>
+      <p id="overText">Derrota en combate.</p>
+      <button id="restartBtn">← VOLVER A EDITAR</button>
+    </div>
+    <div id="gameSetupPanel">
+      <h2>CONFIGURACIÓN LISTA</h2>
+      <p id="setupMsg">Selecciona la dificultad e inicia oleadas cuando estés listo.</p>
+      <div style="margin: 12px 0; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+        <button id="diffEasy" class="diffBtn selected" style="background: #5ee6a0; color: #000; border: 2px solid #5ee6a0;" title="Perfecta para principiantes">
+          ⭐ FÁCIL
+        </button>
+        <button id="diffNormal" class="diffBtn" style="border: 2px solid var(--accent);" title="Desafio equilibrado">
+          ⚔️ NORMAL
+        </button>
+        <button id="diffHard" class="diffBtn" style="border: 2px solid var(--danger);" title="Para expertos">
+          🔥 DIFÍCIL
+        </button>
+      </div>
+      <p id="diffDesc" style="font-size:7px; color:var(--accent2); margin: 8px 0;">Perfecta para principiantes</p>
+      <button id="launchBtn">▶ INICIAR PARTIDA</button>
+    </div>
+  </div>
+
+  <div id="towerbar">
+    <button id="towerDardo" class="selected">
+      <span class="swatch" style="background:#4cc9f0"></span>DARDO<br><span style="color:#8ea0b8">40 oro</span>
+    </button>
+    <button id="towerCanon">
+      <span class="swatch" style="background:#f7b733"></span>CAÑÓN<br><span style="color:#8ea0b8">90 oro</span>
+    </button>
+    <button id="towerRayo">
+      <span class="swatch" style="background:#00ffff"></span>RAYO<br><span style="color:#8ea0b8">70 oro</span>
+    </button>
+    <button id="towerVeneno">
+      <span class="swatch" style="background:#00ff00"></span>VENENO<br><span style="color:#8ea0b8">60 oro</span>
+    </button>
+    <button id="startWaveBtn">▶ OLEADA</button>
+    <button id="pauseGameBtn" style="border-color:var(--muted)">⏸ PAUSA</button>
+    <button id="restartGameBtn" style="margin-left:auto; border-color:var(--danger)">↻ REINICIAR PARTIDA</button>
+  </div>
+
+  <div class="msg" id="msg">Elige una torre y haz click para construir.</div>
+</div>
+
+<script>
+function initTowerDefense(){
+  const COLS = 13, ROWS = 9;
+  const TILE_W = 62, TILE_H = 36, TILE_DEPTH = 12;
+  const ORIGIN_X = 450, ORIGIN_Y = 70;
+
+  function tileToScreen(c, r){
+    return { x: ORIGIN_X + (c - r) * (TILE_W / 2), y: ORIGIN_Y + (c + r) * (TILE_H / 2) };
+  }
+  function screenToTile(x, y){
+    const isoX = x - ORIGIN_X, isoY = y - ORIGIN_Y;
+    const a = (isoX / (TILE_W / 2)), b = (isoY / (TILE_H / 2));
+    return { c: Math.round((a + b) / 2), r: Math.round((b - a) / 2) };
+  }
+  function inGrid(c, r){ return c >= 0 && c < COLS && r >= 0 && r < ROWS; }
+
+  // DEFAULT SPRITES CON MÁS DETALLE
+  const DEFAULT_SPRITES = {
+    scout: { isAnimated: true, fps: 6, frames: [{ px: 5, colors: {1:'#ff5566', 2:'#ffd1d6', 3:'#7a1020'}, pattern: [[0,0,1,1,0,0],[0,1,1,1,1,0],[1,1,2,2,1,1],[1,1,1,1,1,1],[0,3,0,0,3,0],[0,3,0,0,3,0]] }, { px: 5, colors: {1:'#ff5566', 2:'#ffd1d6', 3:'#7a1020'}, pattern: [[0,0,1,1,0,0],[0,1,1,1,1,0],[1,1,2,2,1,1],[1,1,1,1,1,1],[3,0,0,0,0,3],[3,0,0,0,0,3]] }] },
+    grunt: { isAnimated: true, fps: 5, frames: [{ px: 5, colors: {1:'#f7b733', 2:'#fff0c2', 3:'#7a4a05'}, pattern: [[0,1,1,1,1,0],[1,1,2,2,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[0,3,1,1,3,0],[0,3,0,0,3,0]] }, { px: 5, colors: {1:'#f7b733', 2:'#fff0c2', 3:'#7a4a05'}, pattern: [[0,1,1,1,1,0],[1,1,2,2,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[3,0,1,1,0,3],[3,0,0,0,0,3]] }] },
+    brute: { isAnimated: true, fps: 4, frames: [{ px: 5, colors: {1:'#8a4fff', 2:'#e6d6ff', 3:'#3c1f80'}, pattern: [[0,1,1,1,1,1,1,0],[1,1,1,1,1,1,1,1],[1,1,2,2,2,2,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[0,3,3,1,1,3,3,0],[0,3,0,0,0,0,3,0]] }, { px: 5, colors: {1:'#8a4fff', 2:'#e6d6ff', 3:'#3c1f80'}, pattern: [[0,1,1,1,1,1,1,0],[1,1,1,1,1,1,1,1],[1,1,2,2,2,2,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[3,3,0,1,1,0,3,3],[3,0,0,0,0,0,0,3]] }] },
+    dardo: { isAnimated: false, fps: 0, frames: [{ px: 5, colors: {1:'#4cc9f0', 2:'#ffffff', 3:'#162032'}, pattern: [[0,0,2,2,0,0],[0,2,2,2,2,0],[0,1,1,1,1,0],[0,1,1,1,1,0],[3,3,1,1,3,3],[3,3,3,3,3,3]] }] },
+    canon: { isAnimated: false, fps: 0, frames: [{ px: 5, colors: {1:'#f7b733', 2:'#3a2a06', 3:'#1a1a1a'}, pattern: [[0,0,2,2,0,0],[0,0,2,2,0,0],[0,1,1,1,1,0],[1,1,1,1,1,1],[3,3,3,3,3,3],[3,3,3,3,3,3]] }] },
+    rayo: { isAnimated: false, fps: 0, frames: [{ px: 5, colors: {1:'#00ffff', 2:'#ffffff', 3:'#004d4d'}, pattern: [[0,0,0,2,0,0],[0,0,2,2,2,0],[0,2,1,1,2,0],[2,1,1,1,1,2],[0,2,3,3,2,0],[0,0,3,3,0,0]] }] },
+    veneno: { isAnimated: false, fps: 0, frames: [{ px: 5, colors: {1:'#00ff00', 2:'#99ff66', 3:'#005500'}, pattern: [[0,0,0,1,0,0],[0,0,1,2,1,0],[0,1,1,2,1,0],[1,2,2,2,2,1],[0,1,3,3,1,0],[0,0,3,3,0,0]] }] },
+    decor1: { isAnimated: false, fps: 0, frames: [{ px: 5, colors: {1:'#2d6a4f', 2:'#52b788', 3:'#081c15'}, pattern: [[0,0,1,1,0,0],[0,1,2,2,1,0],[1,2,2,2,2,1],[1,2,2,2,2,1],[0,0,3,3,0,0],[0,0,3,3,0,0]] }] },
+    decor2: { isAnimated: false, fps: 0, frames: [{ px: 5, colors: {1:'#6c757d', 2:'#adb5bd', 3:'#343a40'}, pattern: [[0,0,0,0,0,0],[0,0,2,2,0,0],[0,2,2,1,1,0],[2,1,1,1,3,3],[3,3,3,3,3,3]] }] },
+    decor3: { isAnimated: false, fps: 0, frames: [{ px: 5, colors: {1:'#c7631e', 2:'#e6a664', 3:'#8b4513'}, pattern: [[0,0,0,1,0,0],[0,0,1,1,0,0],[0,1,2,2,1,0],[1,2,2,2,2,1],[0,3,0,0,3,0],[0,3,3,3,3,0]] }] }
+  };
+
+  const SPRITE_META = {
+    path: { label: 'CAMINO', icon: '🛣️' },
+    decor1: { label: 'ÁRBOL', icon: '🌲' },
+    decor2: { label: 'ROCA', icon: '🪨' },
+    decor3: { label: 'FLOR', icon: '🌻' }
+  };
+
+  const DEFAULT_PATH_CORE = [{c:0,r:4},{c:1,r:4},{c:2,r:4},{c:2,r:3},{c:2,r:2},{c:3,r:2},{c:4,r:2},{c:5,r:2},{c:5,r:3},{c:5,r:4},{c:5,r:5},{c:5,r:6},{c:6,r:6},{c:7,r:6},{c:8,r:6},{c:8,r:5},{c:8,r:4},{c:9,r:4},{c:10,r:4},{c:11,r:4},{c:12,r:4}];
+
+  const TOWER_TYPES = {
+    dardo: { cost:40, range:135, rate:0.45, dmg:9, color:'#4cc9f0', splash:0, projSpeed:520, hp:15 },
+    canon: { cost:90, range:115, rate:1.1, dmg:22, color:'#f7b733', splash:55, projSpeed:340, hp:30 },
+    rayo: { cost:70, range:150, rate:0.8, dmg:15, color:'#00ffff', splash:80, projSpeed:600, hp:20 },
+    veneno: { cost:60, range:120, rate:0.6, dmg:8, color:'#00ff00', splash:40, projSpeed:300, hp:18 }
+  };
+
+  function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
+
+  let customSprites = deepClone(DEFAULT_SPRITES);
+  let customPathCore = deepClone(DEFAULT_PATH_CORE);
+  let customPropsMap = [{c:1, r:2, type:'decor1'}];
+  let customTilesetImg = null;
+  let customBgImg = null;
+
+  let activeLevelTool = 'path';
+  let hoverLevelTile = null;
+
+  // CONFIG SETTINGS
+  let gameConfig = {
+    enemyStats: {
+      scout: { hp: 18, dmg: 1, canAttack: false, attackDmg: 2, speed: 95, gold: 4 },
+      grunt: { hp: 40, dmg: 1, canAttack: false, attackDmg: 3, speed: 80, gold: 6 },
+      brute: { hp: 110, dmg: 2, canAttack: true, attackDmg: 5, speed: 50, gold: 15 }
+    },
+    towerStats: {
+      dardo: { hp: 15, dmg: 9, cost: 40 },
+      canon: { hp: 30, dmg: 22, cost: 90 },
+      rayo: { hp: 20, dmg: 15, cost: 70 },
+      veneno: { hp: 18, dmg: 8, cost: 60 }
+    },
+    gameplay: {
+      totalWaves: 10,
+      waveBaseCount: 5,
+      waveIncrement: 2,
+      initialGold: 100,
+      initialLives: 20,
+      enemyAttackRange: 100,
+      enemyFireRate: 1.5
+    },
+    messages: {
+      victory: '¡VICTORIA! Sobreviviste todas las oleadas. ¡Eres un maestro de la defensa!',
+      defeat: 'GAME OVER. Los enemigos llegaron al final del camino. Intenta de nuevo.'
+    }
+  };
+
+  function drawSpriteFrame(ctx, frameObj, cx, cy, flip){
+    if(!frameObj || frameObj.imgElement){
+      if(frameObj && frameObj.imgElement){
+        const w = frameObj.imgElement.width, h = frameObj.imgElement.height;
+        ctx.save();
+        ctx.translate(cx, cy);
+        if(flip) ctx.scale(-1, 1);
+        ctx.drawImage(frameObj.imgElement, -w/2, -h);
+        ctx.restore();
+      }
+      return;
+    }
+    const rows = frameObj.pattern.length, cols = frameObj.pattern[0].length;
+    const w = cols * frameObj.px, h = rows * frameObj.px;
+    const startX = cx - w/2, startY = cy - h;
+    for(let ry=0; ry<rows; ry++){
+      for(let rx=0; rx<cols; rx++){
+        const col = flip ? frameObj.pattern[ry][cols-1-rx] : frameObj.pattern[ry][rx];
+        if(col === 0) continue;
+        ctx.fillStyle = frameObj.colors[col];
+        ctx.fillRect(startX + rx*frameObj.px, startY + ry*frameObj.px, frameObj.px, frameObj.px);
+      }
+    }
+  }
+
+  // TABS
+  const screens = { 
+    sprite: document.getElementById('spriteScreen'), 
+    level: document.getElementById('levelScreen'), 
+    config: document.getElementById('configScreen'), 
+    game: document.getElementById('gameScreen') 
+  };
+  const tabs = { 
+    sprite: document.getElementById('tabSprite'), 
+    level: document.getElementById('tabLevel'), 
+    config: document.getElementById('tabConfig'), 
+    game: document.getElementById('tabGame') 
+  };
+  
+  // Verificar que todos los elementos existan
+  for(const key in screens){
+    if(!screens[key] || !tabs[key]){
+      console.warn(`Missing screen or tab for: ${key}`);
+    }
+  }
+  
+  function showScreen(name){
+    console.log('Switching to screen:', name);
+    for(const k in screens){
+      if(screens[k]) screens[k].classList.toggle('active', k === name);
+      if(tabs[k]) tabs[k].classList.toggle('active', k === name);
+    }
+    if(name === 'game'){
+      refreshGameSetupPanel();
+    }
+  }
+  if(tabs.sprite) tabs.sprite.addEventListener('click', () => showScreen('sprite'));
+  if(tabs.level) tabs.level.addEventListener('click', () => showScreen('level'));
+  if(tabs.config) tabs.config.addEventListener('click', () => showScreen('config'));
+  
+  // Asegurar que el botón JUGAR funcione - con pequeño retraso
+  setTimeout(() => {
+    const gameTabBtn = document.getElementById('tabGame');
+    if(gameTabBtn){
+      gameTabBtn.addEventListener('click', () => {
+        console.log('JUGAR clicked!');
+        showScreen('game');
+      });
+      console.log('tabGame listener attached');
+    } else {
+      console.warn('tabGame button not found!');
+    }
+  }, 50);
+
+  // ========== SPRITE EDITOR ==========
+  const spriteGridCanvas = document.getElementById('spriteGridCanvas');
+  const spritePreviewCanvas = document.getElementById('spritePreviewCanvas');
+  
+  if(!spriteGridCanvas || !spritePreviewCanvas){
+    console.warn('Sprite canvas elements missing');
+    return;
+  }
+  
+  const egCtx = spriteGridCanvas.getContext('2d');
+  const epCtx = spritePreviewCanvas.getContext('2d');
+  
+  if(!egCtx || !epCtx){
+    console.warn('Sprite context not available');
+    return;
+  }
+  epCtx.imageSmoothingEnabled = false; egCtx.imageSmoothingEnabled = false;
+
+  const CELL_PX = 24;
+  let currentSpriteType = 'scout';
+  let activeFrameIdx = 0;
+  let activeBrush = 1;
+  const msgSprite = document.getElementById('msgSprite');
+
+  const spriteTypeBar = document.getElementById('spriteTypeBar');
+  Object.keys(DEFAULT_SPRITES).forEach(type => {
+    const btn = document.createElement('button');
+    const label = type === 'scout' ? 'SCOUT' : type === 'grunt' ? 'GRUNT' : type === 'brute' ? 'BRUTE' : type === 'dardo' ? 'T. DARDO' : type === 'canon' ? 'T. CAÑÓN' : type === 'rayo' ? 'T. RAYO' : type === 'veneno' ? 'T. VENENO' : type === 'decor1' ? 'ÁRBOL' : type === 'decor2' ? 'ROCA' : 'FLOR';
+    btn.textContent = label;
+    btn.dataset.type = type;
+    if(type === currentSpriteType) btn.classList.add('selected');
+    btn.addEventListener('click', () => {
+      currentSpriteType = type;
+      activeFrameIdx = 0;
+      [...spriteTypeBar.children].forEach(b => b.classList.toggle('selected', b.dataset.type === type));
+      syncSizeInputs();
+      renderSpriteEditor();
+    });
+    spriteTypeBar.appendChild(btn);
+  });
+
+  const frameBar = document.getElementById('frameBar');
+  const frameBtnGroup = document.getElementById('frameBtnGroup');
+  
+  function updateFrameBar(){
+    const sprite = customSprites[currentSpriteType];
+    frameBtnGroup.innerHTML = '';
+    
+    if(!sprite.isAnimated){ frameBar.style.display = 'none'; return; }
+    frameBar.style.display = 'flex';
+
+    sprite.frames.forEach((_, idx) => {
+      const b = document.createElement('button');
+      b.className = 'frameBtn' + (idx === activeFrameIdx ? ' selected' : '');
+      b.textContent = (idx + 1);
+      b.style.padding = '4px 8px';
+      b.style.fontSize = '8px';
+      b.addEventListener('click', () => { activeFrameIdx = idx; syncSizeInputs(); renderSpriteEditor(); });
+      frameBtnGroup.appendChild(b);
+    });
+  }
+
+  document.getElementById('addFrameBtn').addEventListener('click', () => {
+    const sprite = customSprites[currentSpriteType];
+    const copy = deepClone(sprite.frames[sprite.frames.length - 1]);
+    delete copy.imgElement;
+    sprite.frames.push(copy);
+    activeFrameIdx = sprite.frames.length - 1;
+    syncSizeInputs();
+    renderSpriteEditor();
+  });
+
+  document.getElementById('removeFrameBtn').addEventListener('click', () => {
+    const sprite = customSprites[currentSpriteType];
+    if(sprite.frames.length <= 1) return;
+    sprite.frames.splice(activeFrameIdx, 1);
+    if(activeFrameIdx >= sprite.frames.length) activeFrameIdx = sprite.frames.length - 1;
+    syncSizeInputs();
+    renderSpriteEditor();
+  });
+
+  const paletteBar = document.getElementById('paletteBar');
+  function buildPalette(){
+    paletteBar.innerHTML = '';
+    const frameObj = customSprites[currentSpriteType].frames[activeFrameIdx];
+    const eraser = document.createElement('div');
+    eraser.className = 'paletteSwatch' + (activeBrush === 0 ? ' active' : '');
+    eraser.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:4px; border:2px solid var(--line); padding:6px; border-radius:3px; cursor:pointer; font-size:8px; background:var(--bg);';
+    eraser.innerHTML = '<div class="box" style="width:20px; height:20px; border:1px solid #000; background:repeating-conic-gradient(#444 0% 25%, #222 0% 50%) 0 0/8px 8px;"></div>BORRAR';
+    eraser.addEventListener('click', () => { activeBrush = 0; buildPalette(); });
+    paletteBar.appendChild(eraser);
+
+    [1,2,3].forEach(n => {
+      const wrap = document.createElement('div');
+      wrap.className = 'paletteSwatch' + (activeBrush === n ? ' active' : '');
+      wrap.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:4px; border:2px solid var(--line); padding:6px; border-radius:3px; cursor:pointer; font-size:8px; background:var(--bg);';
+      const box = document.createElement('div');
+      box.className = 'box';
+      box.style.cssText = 'width:20px; height:20px; border:1px solid #000;';
+      box.style.background = frameObj.colors[n];
+      const colorInput = document.createElement('input');
+      colorInput.type = 'color';
+      colorInput.value = frameObj.colors[n];
+      colorInput.style.cssText = 'width:24px; height:16px; border:none; padding:0; background:none;';
+      colorInput.addEventListener('input', (e) => { frameObj.colors[n] = e.target.value; renderSpriteEditor(); });
+      colorInput.addEventListener('click', (e) => e.stopPropagation());
+      const label = document.createElement('div');
+      label.textContent = 'COL ' + n;
+      wrap.appendChild(box); wrap.appendChild(colorInput); wrap.appendChild(label);
+      wrap.addEventListener('click', () => { activeBrush = n; buildPalette(); });
+      paletteBar.appendChild(wrap);
+    });
+  }
+
+  function syncSizeInputs(){
+    const frameObj = customSprites[currentSpriteType].frames[activeFrameIdx];
+    document.getElementById('rowsInput').value = frameObj.pattern.length;
+    document.getElementById('colsInput').value = frameObj.pattern[0].length;
+  }
+
+  let previewFrameIdx = 0;
+  function renderSpriteEditor(){
+    updateFrameBar();
+    const sprite = customSprites[currentSpriteType];
+    const frameObj = sprite.frames[activeFrameIdx];
+    const rows = frameObj.pattern.length, cols = frameObj.pattern[0].length;
+    
+    spriteGridCanvas.width = cols * CELL_PX;
+    spriteGridCanvas.height = rows * CELL_PX;
+
+    const spriteUpload = document.getElementById('spriteUpload');
+    const removeBtn = document.getElementById('removeSpriteBtn');
+    
+    if (frameObj.imgElement) {
+      spriteUpload.style.display = 'none'; removeBtn.style.display = 'block';
+      msgSprite.textContent = 'Usando imagen subida para el fotograma ' + (activeFrameIdx+1) + '.';
+      spriteGridCanvas.style.opacity = '0.3'; spriteGridCanvas.style.pointerEvents = 'none';
+    } else {
+      spriteUpload.style.display = 'block'; removeBtn.style.display = 'none';
+      msgSprite.textContent = 'Click izquierdo pinta. Click derecho borra.';
+      spriteGridCanvas.style.opacity = '1'; spriteGridCanvas.style.pointerEvents = 'auto';
+    }
+
+    for(let ry=0; ry<rows; ry++){
+      for(let rx=0; rx<cols; rx++){
+        egCtx.fillStyle = (rx+ry)%2===0 ? '#20262f' : '#161b22';
+        egCtx.fillRect(rx*CELL_PX, ry*CELL_PX, CELL_PX, CELL_PX);
+        const val = frameObj.pattern[ry][rx];
+        if(val !== 0){
+          egCtx.fillStyle = frameObj.colors[val];
+          egCtx.fillRect(rx*CELL_PX+1, ry*CELL_PX+1, CELL_PX-2, CELL_PX-2);
+        }
+      }
+    }
+    
+    egCtx.strokeStyle = 'rgba(255,255,255,.08)';
+    for(let i=0;i<=cols;i++){ egCtx.beginPath(); egCtx.moveTo(i*CELL_PX,0); egCtx.lineTo(i*CELL_PX, rows*CELL_PX); egCtx.stroke(); }
+    for(let i=0;i<=rows;i++){ egCtx.beginPath(); egCtx.moveTo(0,i*CELL_PX); egCtx.lineTo(cols*CELL_PX, i*CELL_PX); egCtx.stroke(); }
+
+    buildPalette();
+  }
+
+  setInterval(() => {
+    const sprite = customSprites[currentSpriteType];
+    epCtx.clearRect(0,0,spritePreviewCanvas.width, spritePreviewCanvas.height);
+    if(sprite.isAnimated && sprite.frames.length > 1){
+      previewFrameIdx = (previewFrameIdx + 1) % sprite.frames.length;
+    } else { previewFrameIdx = activeFrameIdx; }
+    const currentFrame = sprite.frames[previewFrameIdx] || sprite.frames[0];
+    drawSpriteFrame(epCtx, currentFrame, spritePreviewCanvas.width/2, spritePreviewCanvas.height - 20, false);
+  }, 200);
+
+  document.getElementById('spriteUpload').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => { customSprites[currentSpriteType].frames[activeFrameIdx].imgElement = img; renderSpriteEditor(); };
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(file); e.target.value = '';
+  });
+
+  document.getElementById('removeSpriteBtn').addEventListener('click', () => {
+      delete customSprites[currentSpriteType].frames[activeFrameIdx].imgElement;
+      renderSpriteEditor();
+  });
+
+  function paintCell(e, erase){
+    const rect = spriteGridCanvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (spriteGridCanvas.width/rect.width);
+    const y = (e.clientY - rect.top) * (spriteGridCanvas.height/rect.height);
+    const col = Math.floor(x / CELL_PX), row = Math.floor(y / CELL_PX);
+    const frameObj = customSprites[currentSpriteType].frames[activeFrameIdx];
+    if(row < 0 || row >= frameObj.pattern.length || col < 0 || col >= frameObj.pattern[0].length) return;
+    frameObj.pattern[row][col] = erase ? 0 : activeBrush;
+    renderSpriteEditor();
+  }
+  spriteGridCanvas.addEventListener('mousedown', (e) => paintCell(e, e.button === 2));
+  spriteGridCanvas.addEventListener('mousemove', (e) => {
+    if(e.buttons === 1) paintCell(e, false);
+    else if(e.buttons === 2) paintCell(e, true);
+  });
+  spriteGridCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  document.getElementById('resizeBtn').addEventListener('click', () => {
+    const newRows = Math.max(4, Math.min(14, parseInt(document.getElementById('rowsInput').value) || 6));
+    const newCols = Math.max(4, Math.min(14, parseInt(document.getElementById('colsInput').value) || 6));
+    const frameObj = customSprites[currentSpriteType].frames[activeFrameIdx];
+    const oldPattern = frameObj.pattern;
+    const fresh = [];
+    for(let r=0;r<newRows;r++){
+      const row = [];
+      for(let c=0;c<newCols;c++){
+        row.push(oldPattern[r] && oldPattern[r][c] !== undefined ? oldPattern[r][c] : 0);
+      }
+      fresh.push(row);
+    }
+    frameObj.pattern = fresh; renderSpriteEditor();
+  });
+
+  document.getElementById('resetSpriteBtn').addEventListener('click', () => {
+    customSprites[currentSpriteType] = deepClone(DEFAULT_SPRITES[currentSpriteType]);
+    activeFrameIdx = 0; syncSizeInputs(); renderSpriteEditor();
+  });
+
+  syncSizeInputs(); renderSpriteEditor();
+
+  // ========== LEVEL EDITOR ==========
+  const levelCanvas = document.getElementById('levelCanvas');
+  if(!levelCanvas){
+    console.warn('Level canvas missing');
+    return;
+  }
+  const lvCtx = levelCanvas.getContext('2d');
+  if(!lvCtx){
+    console.warn('Level context not available');
+    return;
+  }
+  lvCtx.imageSmoothingEnabled = false;
+
+  const toolSelector = document.getElementById('toolSelector');
+  Object.entries(SPRITE_META).forEach(([key, meta]) => {
+    const box = document.createElement('div');
+    box.className = 'toolBox' + (key === 'path' ? ' active' : '');
+    box.dataset.tool = key;
+    box.innerHTML = `<div class="toolPreview">${meta.icon}</div><div>${meta.label}</div>`;
+    box.addEventListener('click', () => {
+      activeLevelTool = key;
+      document.querySelectorAll('.toolBox').forEach(b => b.classList.toggle('active', b.dataset.tool === key));
+    });
+    toolSelector.appendChild(box);
+  });
+
+  function drawIsoBlock(ctx, c, r, topColor, sideColorRight, sideColorLeft, strokeColor){
+    const p = tileToScreen(c, r);
+    const hw = TILE_W / 2, hh = TILE_H / 2, depth = TILE_DEPTH;
+    ctx.fillStyle = sideColorLeft;
+    ctx.beginPath();
+    ctx.moveTo(p.x - hw, p.y);
+    ctx.lineTo(p.x, p.y + hh);
+    ctx.lineTo(p.x, p.y + hh + depth);
+    ctx.lineTo(p.x - hw, p.y + depth);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = sideColorRight;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y + hh);
+    ctx.lineTo(p.x + hw, p.y);
+    ctx.lineTo(p.x + hw, p.y + depth);
+    ctx.lineTo(p.x, p.y + hh + depth);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = topColor;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y - hh);
+    ctx.lineTo(p.x + hw, p.y);
+    ctx.lineTo(p.x, p.y + hh);
+    ctx.lineTo(p.x - hw, p.y);
+    ctx.closePath(); ctx.fill();
+    if(strokeColor){ ctx.strokeStyle = strokeColor; ctx.lineWidth = 1; ctx.stroke(); }
+  }
+
+  function drawTile3D(ctx, c, r, onPath, checker){
+    if(customTilesetImg) {
+      const p = tileToScreen(c, r);
+      const tw = customTilesetImg.width / 2, th = customTilesetImg.height / 2;
+      const tileCol = checker ? 0 : 1, tileRow = onPath ? 1 : 0;
+      ctx.drawImage(customTilesetImg, tileCol * tw, tileRow * th, tw, th, p.x - TILE_W/2, p.y - TILE_H/2, TILE_W, TILE_H);
+    } else {
+      let top = onPath ? (checker ? '#604a32' : '#6e5439') : (checker ? '#386641' : '#40724a');
+      let right = onPath ? '#3b2c1d' : '#223d27';
+      let left = onPath ? '#4a3825' : '#2d5234';
+      drawIsoBlock(ctx, c, r, top, right, left, 'rgba(0,0,0,0.18)');
+    }
+  }
+
+  function isAdjacentToLast(c, r){
+    if(customPathCore.length === 0) return true;
+    const prev = customPathCore[customPathCore.length-1];
+    const dc = Math.abs(c-prev.c), dr = Math.abs(r-prev.r);
+    return (dc===1 && dr===0) || (dc===0 && dr===1);
+  }
+
+  function renderLevelEditor(){
+    lvCtx.clearRect(0,0,levelCanvas.width, levelCanvas.height);
+    
+    if(customBgImg){
+      lvCtx.drawImage(customBgImg, 0, 0, levelCanvas.width, levelCanvas.height);
+    } else {
+      lvCtx.fillStyle = '#05070a';
+      lvCtx.fillRect(0,0,levelCanvas.width, levelCanvas.height);
+    }
+
+    const pathIndex = {};
+    customPathCore.forEach((p,i) => pathIndex[p.c+','+p.r] = i);
+
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        const key = c+','+r;
+        const onPath = key in pathIndex;
+        const checker = (c+r)%2===0;
+        drawTile3D(lvCtx, c, r, onPath, checker);
+      }
+    }
+
+    const drawables = [];
+    customPropsMap.forEach(prop => {
+      drawables.push({
+        depth: prop.c + prop.r,
+        draw: () => {
+          const p = tileToScreen(prop.c, prop.r);
+          drawSpriteFrame(lvCtx, customSprites[prop.type].frames[0], p.x, p.y + 8, false);
+        }
+      });
+    });
+    drawables.sort((a,b) => a.depth - b.depth);
+    drawables.forEach(d => d.draw());
+
+    if(hoverLevelTile && inGrid(hoverLevelTile.c, hoverLevelTile.r)){
+      const key = hoverLevelTile.c+','+hoverLevelTile.r;
+      const alreadyPath = key in pathIndex;
+      if(activeLevelTool === 'path'){
+        const isLast = customPathCore.length>0 && customPathCore[customPathCore.length-1].c===hoverLevelTile.c && customPathCore[customPathCore.length-1].r===hoverLevelTile.r;
+        let valid = false, color = '#ff5566';
+        if(isLast){ valid = true; color = '#ff5566'; }
+        else if(!alreadyPath && isAdjacentToLast(hoverLevelTile.c, hoverLevelTile.r)){ valid = true; color = '#4cc9f0'; }
+        drawIsoBlock(lvCtx, hoverLevelTile.c, hoverLevelTile.r, valid ? 'rgba(76,201,240,.4)' : 'rgba(255,85,102,.4)', 'rgba(0,0,0,.2)', 'rgba(0,0,0,.2)', color);
+      } else {
+        const valid = !alreadyPath;
+        drawIsoBlock(lvCtx, hoverLevelTile.c, hoverLevelTile.r, valid ? 'rgba(247,183,51,.4)' : 'rgba(255,85,102,.4)', 'rgba(0,0,0,.2)', 'rgba(0,0,0,.2)', '#f7b733');
+      }
+    }
+  }
+
+  levelCanvas.addEventListener('mousemove', (e) => {
+    const rect = levelCanvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (levelCanvas.width/rect.width);
+    const y = (e.clientY - rect.top) * (levelCanvas.height/rect.height);
+    hoverLevelTile = screenToTile(x, y); renderLevelEditor();
+  });
+  levelCanvas.addEventListener('mouseleave', () => { hoverLevelTile = null; renderLevelEditor(); });
+
+  levelCanvas.addEventListener('click', (e) => {
+    const rect = levelCanvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (levelCanvas.width/rect.width);
+    const y = (e.clientY - rect.top) * (levelCanvas.height/rect.height);
+    const {c, r} = screenToTile(x, y);
+    if(!inGrid(c, r)) return;
+
+    if(activeLevelTool === 'path'){
+      const idx = customPathCore.findIndex(p => p.c===c && p.r===r);
+      const lastIdx = customPathCore.length - 1;
+      if(idx !== -1 && idx === lastIdx){ customPathCore.pop(); renderLevelEditor(); return; }
+      if(idx !== -1 || !isAdjacentToLast(c, r)) return;
+      customPathCore.push({c, r});
+      customPropsMap = customPropsMap.filter(p => !(p.c === c && p.r === r));
+    } else {
+      const pathIdx = customPathCore.findIndex(p => p.c===c && p.r===r);
+      if(pathIdx !== -1) return;
+      const propIdx = customPropsMap.findIndex(p => p.c===c && p.r===r);
+      if(propIdx !== -1){
+        if(customPropsMap[propIdx].type === activeLevelTool) customPropsMap.splice(propIdx, 1);
+        else customPropsMap[propIdx].type = activeLevelTool;
+      } else {
+        customPropsMap.push({c, r, type: activeLevelTool});
+      }
+    }
+    renderLevelEditor();
+  });
+
+  document.getElementById('genRandomBtn').addEventListener('click', () => {
+    customPathCore = [];
+    let c = 0, r = Math.floor(ROWS/2);
+    customPathCore.push({c, r});
+    while(c < COLS - 1){
+      c++;
+      if(Math.random() > 0.6 && r > 0) r--;
+      else if(Math.random() > 0.6 && r < ROWS - 1) r++;
+      customPathCore.push({c, r});
+    }
+    customPropsMap = [];
+    for(let i=0; i<5; i++){
+      const rc = Math.floor(Math.random()*COLS), rr = Math.floor(Math.random()*ROWS);
+      if(!customPathCore.some(p=>p.c===rc&&p.r===rr)) customPropsMap.push({c:rc, r:rr, type:['decor1','decor2','decor3'][Math.floor(Math.random()*3)]});
+    }
+    renderLevelEditor();
+    document.getElementById('msgLevel').textContent = 'Nivel generado aleatoriamente.';
+  });
+
+  document.getElementById('clearLevelBtn').addEventListener('click', () => {
+    customPathCore = [];
+    customPropsMap = [];
+    renderLevelEditor();
+    document.getElementById('msgLevel').textContent = 'Nivel limpiado.';
+  });
+
+  document.getElementById('resetLevelBtn').addEventListener('click', () => {
+    customPathCore = deepClone(DEFAULT_PATH_CORE);
+    customPropsMap = [{c:1, r:2, type:'decor1'}];
+    renderLevelEditor();
+    document.getElementById('msgLevel').textContent = 'Nivel original restaurado.';
+  });
+
+  document.getElementById('saveLevelBtn').addEventListener('click', () => {
+    const data = { customPathCore, customPropsMap };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'pixel_iso_level.json';
+    a.click();
+  });
+
+  document.getElementById('loadLevelBtn').addEventListener('click', () => document.getElementById('loadLevelUpload').click());
+  document.getElementById('loadLevelUpload').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if(data.customPathCore) customPathCore = data.customPathCore;
+        if(data.customPropsMap) customPropsMap = data.customPropsMap;
+        renderLevelEditor();
+        document.getElementById('msgLevel').textContent = 'Nivel cargado.';
+      } catch(err) { document.getElementById('msgLevel').textContent = 'Error al cargar.'; }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  // PLANTILLA DE TERRENO
+  document.getElementById('downloadTemplateBtn').addEventListener('click', () => {
+    const tCanvas = document.createElement('canvas');
+    const tw = 124, th = 72;
+    tCanvas.width = tw * 2;
+    tCanvas.height = th * 2;
+    const tCtx = tCanvas.getContext('2d');
+    if(!tCtx) return;
+
+    function drawDiamondTemplate(cx, cy, label, fillColor, strokeColor) {
+      const hw = tw / 2 - 4, hh = th / 2 - 4;
+      tCtx.fillStyle = fillColor;
+      tCtx.strokeStyle = strokeColor;
+      tCtx.lineWidth = 3;
+      tCtx.beginPath();
+      tCtx.moveTo(cx, cy - hh);
+      tCtx.lineTo(cx + hw, cy);
+      tCtx.lineTo(cx, cy + hh);
+      tCtx.lineTo(cx - hw, cy);
+      tCtx.closePath();
+      tCtx.fill();
+      tCtx.stroke();
+      tCtx.fillStyle = '#ffffff';
+      tCtx.font = 'bold 12px monospace';
+      tCtx.textAlign = 'center';
+      tCtx.textBaseline = 'middle';
+      tCtx.fillText(label, cx, cy);
+    }
+
+    drawDiamondTemplate(tw / 2, th / 2, 'CESPED 1', '#2d4d38', '#5ee6a0');
+    drawDiamondTemplate(tw + tw / 2, th / 2, 'CESPED 2', '#2d4d38', '#5ee6a0');
+    drawDiamondTemplate(tw / 2, th + th / 2, 'CAMINO 1', '#443322', '#f7b733');
+    drawDiamondTemplate(tw + tw / 2, th + th / 2, 'CAMINO 2', '#443322', '#f7b733');
+
+    const link = document.createElement('a');
+    link.download = 'plantilla_escenario.png';
+    link.href = tCanvas.toDataURL('image/png');
+    link.click();
+    document.getElementById('msgLevel').textContent = '¡Plantilla del terreno descargada!';
+  });
+
+  // TILESET UPLOAD
+  const tilesetUpload = document.getElementById('tilesetUpload');
+  const removeTilesetBtn = document.getElementById('removeTilesetBtn');
+  document.getElementById('uploadTilesetBtn').addEventListener('click', () => tilesetUpload.click());
+  tilesetUpload.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => { customTilesetImg = img; removeTilesetBtn.style.display = 'inline-block'; renderLevelEditor(); };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file); e.target.value = '';
+  });
+  removeTilesetBtn.addEventListener('click', () => { customTilesetImg = null; removeTilesetBtn.style.display = 'none'; renderLevelEditor(); });
+
+  // BACKGROUND UPLOAD
+  const bgUpload = document.getElementById('bgUpload');
+  const removeBgBtn = document.getElementById('removeBgBtn');
+  document.getElementById('uploadBgBtn').addEventListener('click', () => bgUpload.click());
+  bgUpload.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => { customBgImg = img; removeBgBtn.style.display = 'inline-block'; renderLevelEditor(); };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file); e.target.value = '';
+  });
+  removeBgBtn.addEventListener('click', () => { customBgImg = null; removeBgBtn.style.display = 'none'; renderLevelEditor(); });
+
+  renderLevelEditor();
+
+  // ========== CONFIG SCREEN ==========
+  document.getElementById('applyConfigBtn').addEventListener('click', () => {
+    gameConfig.enemyStats.scout.hp = parseInt(document.getElementById('scoutHp').value);
+    gameConfig.enemyStats.scout.canAttack = document.getElementById('scoutCanAttack').checked;
+    gameConfig.enemyStats.scout.attackDmg = parseInt(document.getElementById('scoutAttackDmg').value);
+    gameConfig.enemyStats.scout.speed = parseInt(document.getElementById('scoutSpeed').value);
+    gameConfig.enemyStats.scout.gold = parseInt(document.getElementById('scoutGold').value);
+
+    gameConfig.enemyStats.grunt.hp = parseInt(document.getElementById('gruntHp').value);
+    gameConfig.enemyStats.grunt.canAttack = document.getElementById('gruntCanAttack').checked;
+    gameConfig.enemyStats.grunt.attackDmg = parseInt(document.getElementById('gruntAttackDmg').value);
+    gameConfig.enemyStats.grunt.speed = parseInt(document.getElementById('gruntSpeed').value);
+    gameConfig.enemyStats.grunt.gold = parseInt(document.getElementById('gruntGold').value);
+
+    gameConfig.enemyStats.brute.hp = parseInt(document.getElementById('bruteHp').value);
+    gameConfig.enemyStats.brute.canAttack = document.getElementById('bruteCanAttack').checked;
+    gameConfig.enemyStats.brute.attackDmg = parseInt(document.getElementById('bruteAttackDmg').value);
+    gameConfig.enemyStats.brute.speed = parseInt(document.getElementById('bruteSpeed').value);
+    gameConfig.enemyStats.brute.gold = parseInt(document.getElementById('bruteGold').value);
+
+    gameConfig.towerStats.dardo.hp = parseInt(document.getElementById('towerDardoHp').value);
+    gameConfig.towerStats.dardo.dmg = parseInt(document.getElementById('towerDardoDmg').value);
+    gameConfig.towerStats.dardo.cost = parseInt(document.getElementById('towerDardoCost').value);
+    gameConfig.towerStats.canon.hp = parseInt(document.getElementById('towerCanonHp').value);
+    gameConfig.towerStats.canon.dmg = parseInt(document.getElementById('towerCanonDmg').value);
+    gameConfig.towerStats.canon.cost = parseInt(document.getElementById('towerCanonCost').value);
+    gameConfig.towerStats.rayo.hp = parseInt(document.getElementById('towerRayoHp').value);
+    gameConfig.towerStats.rayo.dmg = parseInt(document.getElementById('towerRayoDmg').value);
+    gameConfig.towerStats.rayo.cost = parseInt(document.getElementById('towerRayoCost').value);
+    gameConfig.towerStats.veneno.hp = parseInt(document.getElementById('towerVenenoHp').value);
+    gameConfig.towerStats.veneno.dmg = parseInt(document.getElementById('towerVenenoDmg').value);
+    gameConfig.towerStats.veneno.cost = parseInt(document.getElementById('towerVenenoCost').value);
+    
+    gameConfig.gameplay.totalWaves = parseInt(document.getElementById('totalWaves').value);
+    gameConfig.gameplay.waveBaseCount = parseInt(document.getElementById('waveBaseCount').value);
+    gameConfig.gameplay.waveIncrement = parseInt(document.getElementById('waveIncrement').value);
+    gameConfig.gameplay.initialGold = parseInt(document.getElementById('initialGold').value);
+    gameConfig.gameplay.enemyAttackRange = parseInt(document.getElementById('enemyAttackRange').value);
+    gameConfig.gameplay.enemyFireRate = parseFloat(document.getElementById('enemyFireRate').value);
+    gameConfig.messages.victory = document.getElementById('victoryMsg').value;
+    gameConfig.messages.defeat = document.getElementById('defeatMsg').value;
+    document.getElementById('msgConfig').textContent = '✓ Configuración guardada.';
+    setTimeout(() => document.getElementById('msgConfig').textContent = 'Ajusta los parámetros del juego y presiona GUARDAR.', 2000);
+  });
+
+  // ========== GAME ==========
+  const canvas = document.getElementById('game');
+  
+  // Ajustar tamaño del canvas para móvil
+  function resizeCanvasForMobile(){
+    const maxWidth = Math.min(900, window.innerWidth - 40);
+    const scale = maxWidth / 900;
+    const newHeight = 560 * scale;
+    canvas.style.width = maxWidth + 'px';
+    canvas.style.height = newHeight + 'px';
+  }
+  
+  if(!canvas){
+    console.error('Canvas element not found!');
+    return;
+  }
+  
+  resizeCanvasForMobile();
+  window.addEventListener('resize', resizeCanvasForMobile);
+  
+  const ctx = canvas.getContext('2d');
+  if(!ctx){
+    console.error('Canvas context not available!');
+    return;
+  }
+  ctx.imageSmoothingEnabled = false;
+
+  const gameSetupPanel = document.getElementById('gameSetupPanel');
+  const launchBtn = document.getElementById('launchBtn');
+  
+  let currentDifficulty = 'normal';
+  const DIFFICULTY_CONFIGS = {
+    easy: {
+      name: 'Fácil',
+      desc: 'Perfecta para principiantes',
+      waveIncrement: 1,
+      enemySpeedMultiplier: 0.8,
+      towerCostMultiplier: 0.8,
+      initialGoldMultiplier: 1.5
+    },
+    normal: {
+      name: 'Normal',
+      desc: 'Desafío equilibrado',
+      waveIncrement: 2,
+      enemySpeedMultiplier: 1.0,
+      towerCostMultiplier: 1.0,
+      initialGoldMultiplier: 1.0
+    },
+    hard: {
+      name: 'Difícil',
+      desc: 'Para jugadores expertos',
+      waveIncrement: 3,
+      enemySpeedMultiplier: 1.2,
+      towerCostMultiplier: 1.1,
+      initialGoldMultiplier: 0.8
+    }
+  };
+
+  function clampStep(v){ return v > 0 ? 1 : v < 0 ? -1 : 1; }
+  function computeFullPath(core){
+    if(core.length < 2) return [];
+    const first = core[0], second = core[1], last = core[core.length-1], secondLast = core[core.length-2];
+    const entryDir = { c: first.c - second.c, r: first.r - second.r };
+    const entry = { c: first.c + clampStep(entryDir.c), r: first.r + clampStep(entryDir.r) };
+    const exitDir = { c: last.c - secondLast.c, r: last.r - secondLast.r };
+    const exit = { c: last.c + clampStep(exitDir.c), r: last.r + clampStep(exitDir.r) };
+    return [entry, ...core, exit];
+  }
+
+  let pathTiles = [], pathSet = new Set(), pathWaypoints = [];
+  let gold, lives, wave, enemies, towers, projectiles;
+  let selectedTower = 'dardo';
+  let waveActive = false, spawnQueue = [], spawnTimer = 0, gameOver = false, gameLaunched = false, gamePaused = false;
+  let hoverTile = null;
+
+  const goldLabel = document.getElementById('goldLabel');
+  const livesLabel = document.getElementById('livesLabel');
+  const waveLabel = document.getElementById('waveLabel');
+  const waveTotal = document.getElementById('waveTotal');
+  const overlay = document.getElementById('overlay');
+  const startWaveBtn = document.getElementById('startWaveBtn');
+  const pauseGameBtn = document.getElementById('pauseGameBtn');
+
+  function isOnPath(c, r){ return pathSet.has(c+','+r); }
+
+  function refreshGameSetupPanel(){
+    if(!gameLaunched){ gameSetupPanel.style.display = 'flex'; renderIdlePreview(); }
+  }
+
+  function renderIdlePreview(){
+    const tmpPath = computeFullPath(customPathCore);
+    const tmpSet = new Set();
+    tmpPath.forEach(p => tmpSet.add(p.c+','+p.r));
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    
+    if(customBgImg){
+      ctx.drawImage(customBgImg, 0, 0, canvas.width, canvas.height);
+    } else {
+      ctx.fillStyle = '#05070a';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+    }
+    
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        drawTile3D(ctx, c, r, tmpSet.has(c+','+r), (c+r)%2===0);
+      }
+    }
+
+    const drawables = [];
+    for(const prop of customPropsMap) {
+      drawables.push({
+        depth: prop.c + prop.r,
+        draw: () => {
+          const p = tileToScreen(prop.c, prop.r);
+          drawSpriteFrame(ctx, customSprites[prop.type].frames[0], p.x, p.y + 8, false);
+        }
+      });
+    }
+    drawables.sort((a,b) => a.depth - b.depth);
+    drawables.forEach(d => d.draw());
+  }
+
+  function initGame(){
+    pathTiles = computeFullPath(customPathCore);
+    pathSet = new Set();
+    pathTiles.forEach(p => pathSet.add(p.c+','+p.r));
+    pathWaypoints = pathTiles.map(p => tileToScreen(p.c, p.r));
+
+    const diffConfig = DIFFICULTY_CONFIGS[currentDifficulty];
+    gold = Math.ceil(gameConfig.gameplay.initialGold * diffConfig.initialGoldMultiplier);
+    lives = gameConfig.gameplay.initialLives;
+    wave = 0;
+    enemies = []; towers = []; projectiles = [];
+    waveActive = false; spawnQueue = []; spawnTimer = 0; gameOver = false;
+    gamePaused = false;
+    startWaveBtn.disabled = false;
+    pauseGameBtn.textContent = '⏸ PAUSA';
+    overlay.style.display = 'none';
+    updateHUD();
+  }
+
+  launchBtn.addEventListener('click', () => {
+    if(customPathCore.length < 2) return;
+    gameLaunched = true;
+    gameSetupPanel.style.display = 'none';
+    initGame();
+  });
+
+  pauseGameBtn.addEventListener('click', () => {
+    if(!gameLaunched) return;
+    gamePaused = !gamePaused;
+    pauseGameBtn.textContent = gamePaused ? '▶ REANUDAR' : '⏸ PAUSA';
+  });
+
+  document.getElementById('restartGameBtn').addEventListener('click', () => {
+    if(!gameLaunched) return;
+    overlay.style.display = 'none';
+    gameOver = false;
+    initGame();
+    gamePaused = false;
+    pauseGameBtn.textContent = '⏸ PAUSA';
+  });
+
+  function updateHUD(){
+    goldLabel.textContent = gold;
+    livesLabel.textContent = lives;
+    waveLabel.textContent = wave;
+    waveTotal.textContent = gameConfig.gameplay.totalWaves;
+  }
+
+  function buildWave(n){
+    const q = [];
+    const diffConfig = DIFFICULTY_CONFIGS[currentDifficulty];
+    const count = gameConfig.gameplay.waveBaseCount + n * diffConfig.waveIncrement;
+    for(let i=0;i<count;i++){
+      let type = 'scout';
+      const roll = Math.random();
+      if(n >= 5 && roll < 0.22) type = 'brute';
+      else if(n >= 2 && roll < 0.55) type = 'grunt';
+      q.push(type);
+    }
+    return q;
+  }
+
+  function startWave(){
+    if(!gameLaunched || waveActive || gameOver || wave >= gameConfig.gameplay.totalWaves) return;
+    wave++;
+    spawnQueue = buildWave(wave);
+    spawnTimer = 0; waveActive = true;
+    updateHUD();
+    startWaveBtn.disabled = true;
+  }
+
+  function spawnEnemy(type){
+    if(!pathWaypoints || pathWaypoints.length === 0) return;
+    const stats = gameConfig.enemyStats[type];
+    if(!stats) return;
+    const diffConfig = DIFFICULTY_CONFIGS[currentDifficulty];
+    const adjustedSpeed = stats.speed * diffConfig.enemySpeedMultiplier;
+    enemies.push({
+      type, hp: stats.hp, maxHp: stats.hp, speed: adjustedSpeed, gold: stats.gold, dmg: stats.dmg,
+      wp: 0, x: pathWaypoints[0].x, y: pathWaypoints[0].y, dead:false, flip: false,
+      animTimer: 0, frameIdx: 0,
+      canAttack: stats.canAttack, attackDmg: stats.attackDmg, attackCooldown: 0, currentTarget: null
+    });
+  }
+
+  canvas.addEventListener('mousemove', (e) => {
+    if(!gameLaunched) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (canvas.width/rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height/rect.height);
+    hoverTile = screenToTile(x, y);
+  });
+
+  canvas.addEventListener('click', (e) => {
+    if(!gameLaunched || gameOver || gamePaused) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (canvas.width/rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height/rect.height);
+    const {c, r} = screenToTile(x, y);
+    tryPlaceTower(c, r);
+  });
+
+  function tryPlaceTower(c, r){
+    if(!inGrid(c, r) || isOnPath(c, r) || towers.some(t => t.c === c && t.r === r) || customPropsMap.some(p => p.c === c && p.r === r)) return;
+    const def = TOWER_TYPES[selectedTower];
+    if(!def) return;
+    const diffConfig = DIFFICULTY_CONFIGS[currentDifficulty];
+    const baseCost = gameConfig.towerStats[selectedTower].cost || def.cost;
+    const adjustedCost = Math.ceil(baseCost * diffConfig.towerCostMultiplier);
+    if(gold < adjustedCost) return;
+    gold -= adjustedCost;
+    const pos = tileToScreen(c, r);
+    towers.push({ 
+      c, r, x: pos.x, y: pos.y - 10, type: selectedTower, cooldown: 0, range: def.range,
+      hp: gameConfig.towerStats[selectedTower].hp, maxHp: gameConfig.towerStats[selectedTower].hp
+    });
+    updateHUD();
+  }
+
+  document.getElementById('towerDardo').addEventListener('click', () => { 
+    selectedTower = 'dardo';
+    document.querySelectorAll('#towerbar button:not(#startWaveBtn):not(#pauseGameBtn):not(#restartGameBtn)').forEach(b => b.classList.remove('selected'));
+    document.getElementById('towerDardo').classList.add('selected');
+  });
+  document.getElementById('towerCanon').addEventListener('click', () => { 
+    selectedTower = 'canon';
+    document.querySelectorAll('#towerbar button:not(#startWaveBtn):not(#pauseGameBtn):not(#restartGameBtn)').forEach(b => b.classList.remove('selected'));
+    document.getElementById('towerCanon').classList.add('selected');
+  });
+  document.getElementById('towerRayo').addEventListener('click', () => { 
+    selectedTower = 'rayo';
+    document.querySelectorAll('#towerbar button:not(#startWaveBtn):not(#pauseGameBtn):not(#restartGameBtn)').forEach(b => b.classList.remove('selected'));
+    document.getElementById('towerRayo').classList.add('selected');
+  });
+  document.getElementById('towerVeneno').addEventListener('click', () => { 
+    selectedTower = 'veneno';
+    document.querySelectorAll('#towerbar button:not(#startWaveBtn):not(#pauseGameBtn):not(#restartGameBtn)').forEach(b => b.classList.remove('selected'));
+    document.getElementById('towerVeneno').classList.add('selected');
+  });
+  
+  // Event listeners de dificultad
+  document.getElementById('diffEasy').addEventListener('click', () => {
+    currentDifficulty = 'easy';
+    document.querySelectorAll('.diffBtn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('diffEasy').classList.add('selected');
+    document.getElementById('diffEasy').style.background = '#5ee6a0';
+    document.getElementById('diffEasy').style.color = '#000';
+    document.getElementById('diffNormal').style.background = 'transparent';
+    document.getElementById('diffNormal').style.color = 'var(--text)';
+    document.getElementById('diffHard').style.background = 'transparent';
+    document.getElementById('diffHard').style.color = 'var(--text)';
+    document.getElementById('diffDesc').textContent = DIFFICULTY_CONFIGS.easy.desc;
+  });
+  
+  document.getElementById('diffNormal').addEventListener('click', () => {
+    currentDifficulty = 'normal';
+    document.querySelectorAll('.diffBtn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('diffNormal').classList.add('selected');
+    document.getElementById('diffNormal').style.background = 'var(--accent)';
+    document.getElementById('diffNormal').style.color = '#000';
+    document.getElementById('diffEasy').style.background = 'transparent';
+    document.getElementById('diffEasy').style.color = 'var(--text)';
+    document.getElementById('diffHard').style.background = 'transparent';
+    document.getElementById('diffHard').style.color = 'var(--text)';
+    document.getElementById('diffDesc').textContent = DIFFICULTY_CONFIGS.normal.desc;
+  });
+  
+  document.getElementById('diffHard').addEventListener('click', () => {
+    currentDifficulty = 'hard';
+    document.querySelectorAll('.diffBtn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('diffHard').classList.add('selected');
+    document.getElementById('diffHard').style.background = 'var(--danger)';
+    document.getElementById('diffHard').style.color = '#fff';
+    document.getElementById('diffEasy').style.background = 'transparent';
+    document.getElementById('diffEasy').style.color = 'var(--text)';
+    document.getElementById('diffNormal').style.background = 'transparent';
+    document.getElementById('diffNormal').style.color = 'var(--text)';
+    document.getElementById('diffDesc').textContent = DIFFICULTY_CONFIGS.hard.desc;
+  });
+  
+  startWaveBtn.addEventListener('click', startWave);
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    overlay.style.display = 'none';
+    gameLaunched = false;
+    gameSetupPanel.style.display = 'flex';
+    renderIdlePreview();
+  });
+
+  function update(dt){
+    if(!gameLaunched || gameOver || gamePaused) return;
+
+    if(waveActive && spawnQueue.length > 0){
+      spawnTimer -= dt;
+      if(spawnTimer <= 0){ spawnEnemy(spawnQueue.shift()); spawnTimer = 0.6; }
+    }
+
+    for(const en of enemies){
+      if(en.dead) continue;
+      const target = pathWaypoints[en.wp + 1];
+      if(!target){ en.dead = true; lives -= en.dmg; updateHUD(); if(lives <= 0) endGame(false); continue; }
+      const dx = target.x - en.x, dy = target.y - en.y;
+      const dist = Math.hypot(dx, dy);
+      const step = en.speed * dt;
+      if(dx < -0.1) en.flip = true;
+      else if(dx > 0.1) en.flip = false;
+      if(step >= dist){ en.x = target.x; en.y = target.y; en.wp++; }
+      else { en.x += dx/dist*step; en.y += dy/dist*step; }
+    }
+    enemies = enemies.filter(en => !en.dead);
+
+    // Enemies attack towers
+    for(const en of enemies){
+      if(!en.canAttack || en.dead) continue;
+      en.attackCooldown -= dt;
+      let bestTower = null, bestDist = Infinity;
+      for(const t of towers){
+        const d = Math.hypot(en.x - t.x, en.y - (t.y+10));
+        if(d <= gameConfig.gameplay.enemyAttackRange && d < bestDist){ bestTower = t; bestDist = d; }
+      }
+      if(bestTower && en.attackCooldown <= 0){
+        en.attackCooldown = gameConfig.gameplay.enemyFireRate;
+        bestTower.hp = (bestTower.hp || TOWER_TYPES[bestTower.type].hp) - en.attackDmg;
+        if(bestTower.hp <= 0){
+          towers = towers.filter(t => t !== bestTower);
+        }
+      }
+    }
+
+    for(const t of towers){
+      t.cooldown -= dt;
+      const def = TOWER_TYPES[t.type];
+      if(!def || t.cooldown > 0) continue;
+      let best = null, bestDist = Infinity;
+      for(const en of enemies){
+        const d = Math.hypot(en.x - t.x, en.y - (t.y+10));
+        if(d <= def.range && d < bestDist){ best = en; bestDist = d; }
+      }
+      if(best){
+        t.cooldown = def.rate;
+        projectiles.push({ x: t.x, y: t.y - 12, target: best, type: t.type, dmg: gameConfig.towerStats[t.type].dmg, splash: def.splash, speed: def.projSpeed, color: def.color });
+      }
+    }
+
+    for(const p of projectiles){
+      if(!p.target || p.target.dead){ p.hit = true; continue; }
+      const dx = p.target.x - p.x, dy = (p.target.y - 14) - p.y;
+      const dist = Math.hypot(dx, dy);
+      const step = p.speed * dt;
+      if(step >= dist){
+        p.hit = true;
+        if(p.target){ 
+          p.target.hp -= p.dmg;
+          if(p.target.hp <= 0 && !p.target.dead){ p.target.dead = true; gold += p.target.gold; updateHUD(); }
+        }
+      } else { p.x += dx/dist*step; p.y += dy/dist*step; }
+    }
+    projectiles = projectiles.filter(p => !p.hit);
+
+    if(waveActive && spawnQueue.length === 0 && enemies.length === 0){
+      waveActive = false; startWaveBtn.disabled = (wave >= gameConfig.gameplay.totalWaves);
+      if(wave >= gameConfig.gameplay.totalWaves) endGame(true);
+    }
+  }
+
+  function endGame(won){
+    gameOver = true;
+    overlay.style.display = 'flex';
+    if(won){
+      document.getElementById('overTitle').textContent = '¡VICTORIA!';
+      document.getElementById('overTitle').style.color = '#5ee6a0';
+      document.getElementById('overText').textContent = gameConfig.messages.victory;
+    } else {
+      document.getElementById('overTitle').textContent = 'GAME OVER';
+      document.getElementById('overTitle').style.color = '#ff5566';
+      document.getElementById('overText').textContent = gameConfig.messages.defeat;
+    }
+  }
+
+  function render(){
+    if(!gameLaunched) return;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    
+    if(customBgImg){
+      ctx.drawImage(customBgImg, 0, 0, canvas.width, canvas.height);
+    } else {
+      ctx.fillStyle = '#05070a';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+    }
+
+    for(let r=0; r<ROWS; r++){
+      for(let c=0; c<COLS; c++){
+        drawTile3D(ctx, c, r, isOnPath(c, r), (c+r)%2===0);
+      }
+    }
+
+    if(hoverTile && inGrid(hoverTile.c, hoverTile.r) && !gameOver && !gamePaused){
+      const valid = !isOnPath(hoverTile.c, hoverTile.r) && !towers.some(t=>t.c===hoverTile.c && t.r===hoverTile.r) && !customPropsMap.some(p=>p.c===hoverTile.c && p.r===hoverTile.r);
+      drawIsoBlock(ctx, hoverTile.c, hoverTile.r, valid ? 'rgba(76,201,240,.4)' : 'rgba(255,85,102,.4)', 'rgba(0,0,0,.2)', 'rgba(0,0,0,.2)', valid ? '#4cc9f0' : '#ff5566');
+    }
+
+    const drawables = [];
+    for(const prop of customPropsMap) {
+      drawables.push({
+        depth: prop.c + prop.r,
+        draw: () => {
+          const p = tileToScreen(prop.c, prop.r);
+          drawSpriteFrame(ctx, customSprites[prop.type].frames[0], p.x, p.y + 8, false);
+        }
+      });
+    }
+    for(const t of towers) drawables.push({depth: t.c + t.r, draw: () => drawTower(t)});
+    for(const en of enemies) drawables.push({depth: (en.x+en.y)/50, draw: () => drawEnemy(en)});
+    drawables.sort((a,b) => a.depth - b.depth);
+    for(const d of drawables) d.draw();
+
+    for(const p of projectiles){ ctx.fillStyle = p.color; ctx.fillRect(p.x-2, p.y-2, 4, 4); }
+
+    if(gamePaused){
+      ctx.fillStyle = 'rgba(0,0,0,.7)';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 32px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('PAUSA', canvas.width/2, canvas.height/2);
+    }
+  }
+
+  function drawTower(t){
+    const sprite = customSprites[t.type];
+    const maxHp = gameConfig.towerStats[t.type].hp;
+    const currentHp = t.hp || maxHp;
+    
+    drawSpriteFrame(ctx, sprite.frames[0], t.x, t.y + 10, false);
+
+    // Tower health bar (show only if damaged)
+    if(currentHp < maxHp){
+      const w = 20;
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(t.x-w/2, t.y - 32, w, 3);
+      ctx.fillStyle = currentHp/maxHp > 0.4 ? '#5ee6a0' : '#ff5566';
+      ctx.fillRect(t.x-w/2, t.y - 32, w*(currentHp/maxHp), 3);
+    }
+  }
+
+  function drawEnemy(en){
+    const sprite = customSprites[en.type];
+    const frameObj = sprite.frames[0];
+    ctx.fillStyle = 'rgba(0,0,0,.4)';
+    ctx.beginPath(); ctx.ellipse(en.x, en.y+2, 8, 3, 0, 0, Math.PI*2); ctx.fill();
+    drawSpriteFrame(ctx, frameObj, en.x, en.y+6, en.flip);
+    const w = 20;
+    const spriteH = frameObj.imgElement ? frameObj.imgElement.height : frameObj.pattern.length*frameObj.px;
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(en.x-w/2, en.y - spriteH - 8, w, 4);
+    ctx.fillStyle = en.hp/en.maxHp > 0.4 ? '#5ee6a0' : '#ff5566';
+    ctx.fillRect(en.x-w/2, en.y - spriteH - 8, w*(en.hp/en.maxHp), 4);
+  }
+
+  let lastTime = performance.now();
+  function loop(now){
+    const dt = Math.min((now - lastTime)/1000, 0.05);
+    lastTime = now;
+    if(gameLaunched){ update(dt); render(); }
+    requestAnimationFrame(loop);
+  }
+
+  refreshGameSetupPanel();
+  requestAnimationFrame(loop);
+}
+
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      initTowerDefense();
+    } catch(err) {
+      console.error('Error initializing Tower Defense:', err);
+      const errDiv = document.createElement('div');
+      errDiv.style.cssText = 'position:fixed; top:50px; left:20px; right:20px; background:#ff5566; color:white; padding:20px; border-radius:8px; font-family:monospace; font-size:12px; z-index:99999; max-height:300px; overflow:auto;';
+      errDiv.innerHTML = '<strong>ERROR:</strong><br>' + err.toString() + '<br><br><small>' + err.stack + '</small>';
+      document.body.appendChild(errDiv);
+    }
+  });
+} else {
+  setTimeout(() => {
+    try {
+      initTowerDefense();
+    } catch(err) {
+      console.error('Error initializing Tower Defense:', err);
+      const errDiv = document.createElement('div');
+      errDiv.style.cssText = 'position:fixed; top:50px; left:20px; right:20px; background:#ff5566; color:white; padding:20px; border-radius:8px; font-family:monospace; font-size:12px; z-index:99999; max-height:300px; overflow:auto;';
+      errDiv.innerHTML = '<strong>ERROR:</strong><br>' + err.toString() + '<br><br><small>' + err.stack + '</small>';
+      document.body.appendChild(errDiv);
+    }
+  }, 100);
+}
+</script>
+</body>
+</html>
