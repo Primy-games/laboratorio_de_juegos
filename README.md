@@ -1,4 +1,4 @@
-## 🇬🇧 Español
+## 🇪🇸 Español
 
 
 # 🎮 Laboratorio de Juegos Arcade Personalizables
