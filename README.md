@@ -69,10 +69,10 @@ Prueba inmediatamente cualquier configuración creada por el usuario.
 
 ### 📸 Capturas
 
-* imagenes/Pacman1.png
-* imagenes/Pacman2.png
-* imagenes/Pacman3.png
-* imagenes/Pacman4.png
+* imagenes/Pac_man1.png
+* imagenes/Pac_man2.png
+* imagenes/Pac_man3.png
+* imagenes/Pac_man4.png
 
 
 
@@ -131,10 +131,10 @@ Lanza una partida utilizando todas las modificaciones seleccionadas.
 
 ### 📸 Capturas
 
-* imagenes/spaceinvaders1.png
-* imagenes/spaceinvaders2.png
-* imagenes/spaceinvaders3.png
-* imagenes/space\_invaders4.png
+* imagenes/space_invaders1.png
+* imagenes/space_invaders2.png
+* imagenes/space_invaders3.png
+* imagenes/space_invaders4.png
 
 \---
 
@@ -195,10 +195,10 @@ Permite probar inmediatamente el nivel y la configuración creados por el jugado
 
 ### 📸 Capturas
 
-* imagenes/towerdefense1.png
-* imagenes/towerdefense2.png
-* imagenes/towerdefense3.png
-* imagenes/towerdefense4.png
+* imagenes/tower_defense1.png
+* imagenes/tower_defense2.png
+* imagenes/tower_defense3.png
+* imagenes/tower_defense4.png
 
 
 
