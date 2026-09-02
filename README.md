@@ -73,9 +73,9 @@ Prueba inmediatamente cualquier configuración creada por el usuario.
 
 ![CAPTURA](imagenes/Pac_man2.png)
 
-(imagenes/Pac_man3.png)
+![CAPTURA](imagenes/Pac_man3.png)
 
-(imagenes/Pac_man4.png)
+![CAPTURA](imagenes/Pac_man4.png)
 
 
 ## 🚀 Space Invaders Personalizable
@@ -131,10 +131,10 @@ Lanza una partida utilizando todas las modificaciones seleccionadas.
 
 ### 📸 Capturas
 
-imagenes/space_invaders1.png
-imagenes/space_invaders2.png
-imagenes/space_invaders3.png
-imagenes/space_invaders4.png
+![CAPTURA](imagenes/space_invaders1.png)
+![CAPTURA](imagenes/space_invaders2.png)
+![CAPTURA](imagenes/space_invaders3.png)
+![CAPTURA](imagenes/space_invaders4.png)
 
 \---
 
@@ -195,10 +195,10 @@ Permite probar inmediatamente el nivel y la configuración creados por el jugado
 
 ### 📸 Capturas
 
-imagenes/tower_defense1.png
-imagenes/tower_defense2.png
-imagenes/tower_defense3.png
-imagenes/tower_defense4.png
+![CAPTURA](imagenes/tower_defense1.png)
+![CAPTURA](imagenes/tower_defense2.png)
+![CAPTURA](imagenes/tower_defense3.png)
+![CAPTURA](imagenes/tower_defense4.png)
 
 
 
