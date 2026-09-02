@@ -69,10 +69,10 @@ Prueba inmediatamente cualquier configuración creada por el usuario.
 
 ### 📸 Capturas
 
-* imagenes/pacman1.png
-* imagenes/pacman2.png
-* imagenes/pacman3.png
-* imagenes/pacman4.png
+* imagenes/Pacman1.png
+* imagenes/Pacman2.png
+* imagenes/Pacman3.png
+* imagenes/Pacman4.png
 
 
 
