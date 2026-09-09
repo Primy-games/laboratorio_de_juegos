@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ytuj Runner - Configurador</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background: #14141f;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #eee;
+  }
+  #app {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 14px;
+  }
+  h1 { font-size: 18px; margin: 4px 0 12px; color: #fff; }
+  #tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  #tabs button {
+    background: #23233a;
+    color: #ccc;
+    border: 1px solid #383858;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    border-radius: 6px 6px 0 0;
+  }
+  #tabs button.active {
+    background: #3fa9f5;
+    color: #111;
+    font-weight: bold;
+    border-color: #3fa9f5;
+  }
+  .panel { display: none; background: #1c1c2e; border: 1px solid #383858; border-radius: 0 8px 8px 8px; padding: 16px; }
+  .panel.active { display: block; }
+
+  fieldset { border: 1px solid #383858; border-radius: 6px; margin-bottom: 14px; }
+  legend { padding: 0 6px; color: #9fd3ff; font-size: 13px; font-weight: bold; }
+  .row { display: flex; align-items: center; gap: 8px; margin: 8px 0; flex-wrap: wrap; }
+  .row label { flex: 0 0 220px; font-size: 12.5px; color: #ccc; }
+  .row input[type=range] { flex: 1; min-width: 120px; }
+  .row input[type=number] { width: 70px; background:#111122; color:#fff; border:1px solid #383858; border-radius:4px; padding:3px; }
+  .row input[type=color] { width: 44px; height: 28px; border:none; background:none; cursor:pointer; }
+  .row .val { width: 50px; text-align: right; font-size: 12px; color: #9fd3ff; }
+
+  .sprite-block { display:flex; align-items:center; gap:14px; margin-bottom:16px; padding:10px; background:#141425; border-radius:6px; }
+  .sprite-block canvas { background: linear-gradient(#dfe6ee,#8fa3c9); border:1px solid #383858; border-radius:4px; }
+  .sprite-block .ctrls { display:flex; flex-direction:column; gap:6px; }
+  .sprite-block .ctrls .row { margin:0; }
+  .sprite-block .ctrls label { flex: 0 0 110px; }
+
+  #dropZone {
+    border: 2px dashed #3fa9f5; border-radius: 8px; padding: 30px;
+    text-align: center; color: #9fd3ff; cursor: pointer; margin-bottom: 14px;
+  }
+  #bgPreviewWrap { display:flex; align-items:center; gap:14px; }
+  #bgPreview { max-width: 280px; max-height: 160px; border:1px solid #383858; border-radius:6px; display:none; }
+  #removeBg { display:none; }
+  button.action {
+    background:#3fa9f5; color:#111; border:none; border-radius:6px; padding:7px 14px;
+    cursor:pointer; font-weight:bold; font-size:12.5px;
+  }
+  button.action.secondary { background:#444; color:#fff; }
+  button.action.flash { outline: 3px solid #ffd93d; box-shadow: 0 0 0 3px rgba(255,217,61,0.35); }
+  #savedMsg {
+    display: inline-block; margin-left: 10px; color: #ffd93d; font-size: 12.5px;
+    font-weight: bold; opacity: 0; transition: opacity 0.25s;
+  }
+  #savedMsg.show { opacity: 1; }
+
+  #wrap { position: relative; width: 100%; max-width: 960px; aspect-ratio: 16/9; margin: 0 auto; }
+  canvas#game { width:100%; height:100%; display:block; background: linear-gradient(#dfe6ee,#8fa3c9); border:2px solid #333; cursor:pointer; }
+  #hint { position:absolute; bottom:6px; left:8px; color:rgba(255,255,255,0.75); font-size:11px; pointer-events:none; }
+  small.hint-text { color:#888; display:block; margin-top:-6px; margin-bottom:10px; font-size:11.5px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>Ytuj Runner — Configurador</h1>
+  <div id="tabs">
+    <button data-tab="sprites" class="active">1. Sprites</button>
+    <button data-tab="screen">2. Pantalla</button>
+    <button data-tab="config">3. Configuración</button>
+    <button data-tab="game">4. Juego</button>
+  </div>
+
+  <!-- ================= TAB 1: SPRITES ================= -->
+  <div class="panel active" id="panel-sprites">
+    <fieldset>
+      <legend>Animación</legend>
+      <small class="hint-text">Controla a qué velocidad se van alternando los frames (tanto los dibujos generados como las imágenes que subas).</small>
+      <div class="row"><label>Velocidad (fps)</label><input type="range" id="cfg_animFps" min="1" max="14" step="1"><span class="val" id="v_cfg_animFps"></span></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Personajes y enemigos</legend>
+      <small class="hint-text">Puedes subir hasta 3 frames por personaje/enemigo para simular movimiento (ej. alas arriba / neutro / alas abajo). Si no subes ninguno, se usa el dibujo generado automáticamente, que también se anima por frames.</small>
+      <div class="sprite-block">
+        <canvas id="prev-player" width="90" height="90"></canvas>
+        <div class="ctrls">
+          <div class="row"><label>Color jugador</label><input type="color" id="col_player"></div>
+          <div class="row"><label>Color sin saltos</label><input type="color" id="col_playerNoJump"></div>
+          <div class="row"><label>Frame 1</label><input type="file" accept="image/*" id="img_player_1"></div>
+          <div class="row"><label>Frame 2</label><input type="file" accept="image/*" id="img_player_2"></div>
+          <div class="row"><label>Frame 3</label><input type="file" accept="image/*" id="img_player_3"></div>
+          <div class="row"><button class="action secondary" id="clear_player">Quitar frames</button></div>
+        </div>
+      </div>
+      <div class="sprite-block">
+        <canvas id="prev-bird" width="90" height="90"></canvas>
+        <div class="ctrls">
+          <div class="row"><label>Color ave (cuerpo)</label><input type="color" id="col_bird"></div>
+          <div class="row"><label>Color ave (pico)</label><input type="color" id="col_birdBeak"></div>
+          <div class="row"><label>Frame 1</label><input type="file" accept="image/*" id="img_bird_1"></div>
+          <div class="row"><label>Frame 2</label><input type="file" accept="image/*" id="img_bird_2"></div>
+          <div class="row"><label>Frame 3</label><input type="file" accept="image/*" id="img_bird_3"></div>
+          <div class="row"><button class="action secondary" id="clear_bird">Quitar frames</button></div>
+        </div>
+      </div>
+      <div class="sprite-block">
+        <canvas id="prev-bat" width="90" height="90"></canvas>
+        <div class="ctrls">
+          <div class="row"><label>Color murciélago</label><input type="color" id="col_bat"></div>
+          <div class="row"><label>Frame 1</label><input type="file" accept="image/*" id="img_bat_1"></div>
+          <div class="row"><label>Frame 2</label><input type="file" accept="image/*" id="img_bat_2"></div>
+          <div class="row"><label>Frame 3</label><input type="file" accept="image/*" id="img_bat_3"></div>
+          <div class="row"><button class="action secondary" id="clear_bat">Quitar frames</button></div>
+        </div>
+      </div>
+      <div class="sprite-block">
+        <canvas id="prev-drone" width="90" height="90"></canvas>
+        <div class="ctrls">
+          <div class="row"><label>Color cuerpo dron</label><input type="color" id="col_drone"></div>
+          <div class="row"><label>Color luces dron</label><input type="color" id="col_droneAccent"></div>
+          <div class="row"><label>Frame 1</label><input type="file" accept="image/*" id="img_drone_1"></div>
+          <div class="row"><label>Frame 2</label><input type="file" accept="image/*" id="img_drone_2"></div>
+          <div class="row"><label>Frame 3</label><input type="file" accept="image/*" id="img_drone_3"></div>
+          <div class="row"><button class="action secondary" id="clear_drone">Quitar frames</button></div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Edificios (tiles)</legend>
+      <small class="hint-text">Los edificios se construyen a partir de un mosaico de tiles repetido: puedes cambiar color de ladrillo, junta y tamaño de tile.</small>
+      <div class="sprite-block">
+        <canvas id="prev-tile" width="140" height="90"></canvas>
+        <div class="ctrls">
+          <div class="row"><label>Color ladrillo</label><input type="color" id="col_tileBrick"></div>
+          <div class="row"><label>Color junta</label><input type="color" id="col_tileMortar"></div>
+          <div class="row"><label>Tamaño tile</label><input type="range" id="cfg_tileSize" min="10" max="48" step="1"><span class="val" id="v_cfg_tileSize"></span></div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Nube (obstáculo visual)</legend>
+      <small class="hint-text">Nube grande en primer plano que cruza de derecha a izquierda a la mitad de la velocidad de las aves, tapando parte de la pantalla.</small>
+      <div class="sprite-block">
+        <canvas id="prev-cloud" width="140" height="90"></canvas>
+        <div class="ctrls">
+          <div class="row"><label>Color nube</label><input type="color" id="col_cloud"></div>
+          <div class="row"><label>Opacidad</label><input type="range" id="cfg_cloudOpacity" min="0.3" max="1" step="0.05"><span class="val" id="v_cfg_cloudOpacity"></span></div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Capa morada (power-up de inmunidad)</legend>
+      <small class="hint-text">Figura encapuchada que aparece cada X segundos (configurable en la pestaña Configuración). Si el jugador la toca, gana unos segundos de inmunidad.</small>
+      <div class="sprite-block">
+        <canvas id="prev-purple" width="90" height="90"></canvas>
+        <div class="ctrls">
+          <div class="row"><label>Color capa</label><input type="color" id="col_purple"></div>
+          <div class="row"><label>Color capucha (claro)</label><input type="color" id="col_purpleLight"></div>
+          <div class="row"><label>Color detalle (oro)</label><input type="color" id="col_purpleGold"></div>
+          <div class="row"><label>Frame 1</label><input type="file" accept="image/*" id="img_purple_1"></div>
+          <div class="row"><label>Frame 2</label><input type="file" accept="image/*" id="img_purple_2"></div>
+          <div class="row"><label>Frame 3</label><input type="file" accept="image/*" id="img_purple_3"></div>
+          <div class="row"><button class="action secondary" id="clear_purple">Quitar frames</button></div>
+        </div>
+      </div>
+    </fieldset>
+  </div>
+
+  <!-- ================= TAB 2: PANTALLA ================= -->
+  <div class="panel" id="panel-screen">
+    <fieldset>
+      <legend>Fondo de pantalla</legend>
+      <small class="hint-text">Sube una imagen para usar como fondo del juego (sustituye al degradado de cielo).</small>
+      <div id="dropZone">Haz clic aquí o arrastra una imagen (jpg/png)</div>
+      <input type="file" id="bgFileInput" accept="image/*" style="display:none">
+      <div id="bgPreviewWrap">
+        <img id="bgPreview">
+        <button class="action secondary" id="removeBg">Quitar fondo</button>
+      </div>
+    </fieldset>
+  </div>
+
+  <!-- ================= TAB 3: CONFIGURACION ================= -->
+  <div class="panel" id="panel-config">
+    <fieldset>
+      <legend>Físicas y jugador</legend>
+      <div class="row"><label>Gravedad</label><input type="range" id="cfg_gravity" min="0.2" max="1.2" step="0.01"><span class="val" id="v_cfg_gravity"></span></div>
+      <div class="row"><label>Fuerza de salto</label><input type="range" id="cfg_jumpVelocity" min="-18" max="-7" step="0.1"><span class="val" id="v_cfg_jumpVelocity"></span></div>
+      <div class="row"><label>Velocidad scroll base</label><input type="range" id="cfg_scrollSpeedBase" min="1" max="8" step="0.1"><span class="val" id="v_cfg_scrollSpeedBase"></span></div>
+      <div class="row"><label>Aceleración scroll</label><input type="range" id="cfg_scrollAccel" min="0" max="0.004" step="0.0001"><span class="val" id="v_cfg_scrollAccel"></span></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Fases de enemigos (segundos)</legend>
+      <div class="row"><label>Inicio aves</label><input type="range" id="cfg_phaseBirdsOnly" min="0" max="30" step="1"><span class="val" id="v_cfg_phaseBirdsOnly"></span></div>
+      <div class="row"><label>Inicio aves+murciélagos</label><input type="range" id="cfg_phaseBirdsAndBats" min="0" max="60" step="1"><span class="val" id="v_cfg_phaseBirdsAndBats"></span></div>
+      <div class="row"><label>Inicio todo (+dron)</label><input type="range" id="cfg_phaseAll" min="0" max="90" step="1"><span class="val" id="v_cfg_phaseAll"></span></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Aves</legend>
+      <div class="row"><label>Velocidad</label><input type="range" id="cfg_birdSpeed" min="2" max="14" step="0.1"><span class="val" id="v_cfg_birdSpeed"></span></div>
+      <div class="row"><label>Frecuencia min (s)</label><input type="range" id="cfg_birdSpawnMin" min="0.3" max="5" step="0.1"><span class="val" id="v_cfg_birdSpawnMin"></span></div>
+      <div class="row"><label>Frecuencia max (s)</label><input type="range" id="cfg_birdSpawnMax" min="0.5" max="8" step="0.1"><span class="val" id="v_cfg_birdSpawnMax"></span></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Murciélagos</legend>
+      <div class="row"><label>Amplitud vaivén</label><input type="range" id="cfg_batSineAmp" min="0" max="40" step="1"><span class="val" id="v_cfg_batSineAmp"></span></div>
+      <div class="row"><label>Velocidad vaivén</label><input type="range" id="cfg_batSineSpeed" min="0.5" max="8" step="0.1"><span class="val" id="v_cfg_batSineSpeed"></span></div>
+      <div class="row"><label>Frecuencia min (s)</label><input type="range" id="cfg_batSpawnMin" min="0.5" max="8" step="0.1"><span class="val" id="v_cfg_batSpawnMin"></span></div>
+      <div class="row"><label>Frecuencia max (s)</label><input type="range" id="cfg_batSpawnMax" min="1" max="10" step="0.1"><span class="val" id="v_cfg_batSpawnMax"></span></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Dron</legend>
+      <div class="row"><label>Velocidad</label><input type="range" id="cfg_droneSpeed" min="2" max="16" step="0.1"><span class="val" id="v_cfg_droneSpeed"></span></div>
+      <div class="row"><label>Amplitud parábola</label><input type="range" id="cfg_droneArcAmp" min="0" max="150" step="1"><span class="val" id="v_cfg_droneArcAmp"></span></div>
+      <div class="row"><label>Frecuencia min (s)</label><input type="range" id="cfg_droneSpawnMin" min="1" max="12" step="0.1"><span class="val" id="v_cfg_droneSpawnMin"></span></div>
+      <div class="row"><label>Frecuencia max (s)</label><input type="range" id="cfg_droneSpawnMax" min="2" max="16" step="0.1"><span class="val" id="v_cfg_droneSpawnMax"></span></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Nube</legend>
+      <div class="row"><label>Factor velocidad (vs ave)</label><input type="range" id="cfg_cloudSpeedFactor" min="0.1" max="1" step="0.05"><span class="val" id="v_cfg_cloudSpeedFactor"></span></div>
+      <div class="row"><label>Tamaño min</label><input type="range" id="cfg_cloudSizeMin" min="150" max="500" step="10"><span class="val" id="v_cfg_cloudSizeMin"></span></div>
+      <div class="row"><label>Tamaño max</label><input type="range" id="cfg_cloudSizeMax" min="200" max="650" step="10"><span class="val" id="v_cfg_cloudSizeMax"></span></div>
+      <div class="row"><label>Frecuencia min (s)</label><input type="range" id="cfg_cloudSpawnMin" min="2" max="20" step="0.5"><span class="val" id="v_cfg_cloudSpawnMin"></span></div>
+      <div class="row"><label>Frecuencia max (s)</label><input type="range" id="cfg_cloudSpawnMax" min="3" max="30" step="0.5"><span class="val" id="v_cfg_cloudSpawnMax"></span></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Capa morada — inmunidad</legend>
+      <div class="row"><label>Aparece cada (s)</label><input type="range" id="cfg_purpleSpawnInterval" min="3" max="60" step="1"><span class="val" id="v_cfg_purpleSpawnInterval"></span></div>
+      <div class="row"><label>Duración inmunidad (s)</label><input type="range" id="cfg_capeImmunityDuration" min="2" max="30" step="1"><span class="val" id="v_cfg_capeImmunityDuration"></span></div>
+      <div class="row"><label>Velocidad (factor vs ave)</label><input type="range" id="cfg_capeSpeedFactor" min="0.1" max="1" step="0.05"><span class="val" id="v_cfg_capeSpeedFactor"></span></div>
+      <div class="row"><label>Tamaño min</label><input type="range" id="cfg_capeSizeMin" min="30" max="120" step="5"><span class="val" id="v_cfg_capeSizeMin"></span></div>
+      <div class="row"><label>Tamaño max</label><input type="range" id="cfg_capeSizeMax" min="40" max="160" step="5"><span class="val" id="v_cfg_capeSizeMax"></span></div>
+      <div class="row"><label>Opacidad jugador inmune</label><input type="range" id="cfg_immuneOpacity" min="0.2" max="1" step="0.05"><span class="val" id="v_cfg_immuneOpacity"></span></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Plataformas / edificios</legend>
+      <div class="row"><label>Edificios sólidos por los lados</label><input type="checkbox" id="cfg_platformsSolid"></div>
+      <small class="hint-text">Activado: si el jugador golpea el lateral de un edificio sin haber saltado por encima, es un choque real (game over) — no hay forma de esquivarlo salvo saltar a tiempo. Desactivado: los laterales son atravesables. En ambos casos los edificios llegan hasta el fondo de la pantalla.</small>
+      <div class="row"><label>Limitar automáticamente al alcance del salto</label><input type="checkbox" id="cfg_autoReachLimit"></div>
+      <small class="hint-text">Activado (recomendado): la altura y el hueco máximos entre edificios se recalculan solos a partir de la física del salto, para que nunca salga algo imposible. Desactivado: tú controlas los valores de abajo directamente, sin ningún límite automático (puedes crear situaciones imposibles si te pasas).</small>
+      <div class="row"><label>Hueco min entre edificios</label><input type="range" id="cfg_platGapMin" min="30" max="200" step="1"><span class="val" id="v_cfg_platGapMin"></span></div>
+      <div class="row"><label>Hueco max entre edificios</label><input type="range" id="cfg_platGapMax" min="60" max="320" step="1"><span class="val" id="v_cfg_platGapMax"></span></div>
+      <div class="row"><label>Variación normal altura</label><input type="range" id="cfg_platYVar" min="20" max="220" step="5"><span class="val" id="v_cfg_platYVar"></span></div>
+      <div class="row"><label>Prob. salto brusco</label><input type="range" id="cfg_platBigChance" min="0" max="0.7" step="0.01"><span class="val" id="v_cfg_platBigChance"></span></div>
+      <div class="row"><label>Altura mínima (top %)</label><input type="range" id="cfg_platYMinPct" min="10" max="55" step="1"><span class="val" id="v_cfg_platYMinPct"></span></div>
+      <div class="row"><label>Altura máxima (top %)</label><input type="range" id="cfg_platYMaxPct" min="60" max="95" step="1"><span class="val" id="v_cfg_platYMaxPct"></span></div>
+    </fieldset>
+
+    <div class="row"><button class="action" id="applyRestart">Aplicar y reiniciar partida</button><span id="savedMsg">Configuración guardada</span></div>
+  </div>
+
+  <!-- ================= TAB 4: JUEGO ================= -->
+  <div class="panel" id="panel-game">
+    <div id="wrap">
+      <canvas id="game" width="960" height="540"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// ESTADO GLOBAL DE CONFIGURACION
+// ============================================================
+const CFG = {
+  gravity: 0.55,
+  jumpVelocity: -12.5,
+  scrollSpeedBase: 3.2,
+  scrollAccel: 0.0009,
+  playerScreenX: 220,
+  playerSize: 68,
+
+  phaseBirdsOnly: 5,
+  phaseBirdsAndBats: 15,
+  phaseAll: 26,
+
+  birdSpeed: 7.5,
+  birdSpawnMin: 1.2, birdSpawnMax: 2.4,
+
+  batSineAmp: 12, batSineSpeed: 3.2,
+  batSpawnMin: 2.5, batSpawnMax: 4.5,
+
+  droneSpeed: 7.5,
+  droneSpawnMin: 4, droneSpawnMax: 7,
+  droneArcAmp: 70,
+
+  cloudSpeedFactor: 0.5,
+  cloudSpawnMin: 6, cloudSpawnMax: 12,
+  cloudSizeMin: 260, cloudSizeMax: 420,
+  cloudOpacity: 0.9,
+
+  purpleSpawnInterval: 20,
+  capeImmunityDuration: 10,
+  capeSpeedFactor: 0.6,
+  capeSizeMin: 50, capeSizeMax: 70,
+  immuneOpacity: 0.5,
+  bellMinInterval: 0.15,
+  bellMaxInterval: 0.9,
+
+  platGapMin: 70, platGapMax: 210,
+  platYVar: 110,
+  platBigChance: 0.44,
+  platYMinPct: 30,
+  platYMaxPct: 91,
+
+  tileSize: 22,
+  animFps: 6,
+  platformsSolid: true,
+  autoReachLimit: true,
+};
+
+const COLORS = {
+  player: '#3fa9f5',
+  playerNoJump: '#e0526b',
+  bird: '#8b1e1e',
+  birdBeak: '#f0a500',
+  bat: '#5b3a86',
+  drone: '#5a5f66',
+  droneAccent: '#7CFC00',
+  tileBrick: '#8b5a2b',
+  tileMortar: '#5c3a1a',
+  cloud: '#ffffff',
+  purple: '#4a3b5c',
+  purpleLight: '#8a7aa8',
+  purpleGold: '#d4a95a',
+};
+
+let bgImage = null;
+const SPRITE_IMAGES = { player: [null,null,null], bird: [null,null,null], bat: [null,null,null], drone: [null,null,null], purple: [null,null,null] };
+
+function setupSpriteUpload(key) {
+  for (let i = 1; i <= 3; i++) {
+    const input = document.getElementById('img_' + key + '_' + i);
+    if (!input) continue;
+    const slot = i - 1;
+    input.addEventListener('change', () => {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img = new Image();
+        img.onload = () => { SPRITE_IMAGES[key][slot] = img; };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  const clearBtn = document.getElementById('clear_' + key);
+  if (clearBtn) clearBtn.addEventListener('click', () => {
+    SPRITE_IMAGES[key] = [null,null,null];
+    for (let i = 1; i <= 3; i++) {
+      const input = document.getElementById('img_' + key + '_' + i);
+      if (input) input.value = '';
+    }
+  });
+}
+['player','bird','bat','drone','purple'].forEach(setupSpriteUpload);
+
+// ============================================================
+// TABS
+// ============================================================
+document.querySelectorAll('#tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#tabs button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ============================================================
+// CANVAS PRINCIPAL
+// ============================================================
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+function rand(a, b) { return a + Math.random() * (b - a); }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function safeMod(n, m) {
+  // Módulo seguro: nunca negativo (el % de JS puede dar negativos) y nunca
+  // NaN/Infinity, para indexar arrays de frames sin que revienten.
+  if (!Number.isFinite(n)) n = 0;
+  n = Math.trunc(n);
+  return ((n % m) + m) % m;
+}
+
+// ============================================================
+// FORMAS DE SPRITES (compartidas entre previews y juego)
+// ============================================================
+function drawPlayerShape(c, x, y, w, h, color, frameIndex) {
+  frameIndex = frameIndex || 0;
+  // 3 poses de piernas para simular movimiento: 0=neutro, 1=pierna izq. adelantada, 2=pierna der. adelantada
+  const legOffsets = [ [0,0], [-h*0.05, h*0.05], [h*0.05, -h*0.05] ][safeMod(frameIndex, 3)];
+  c.save();
+  c.translate(x, y);
+  // cuerpo (rectangulo redondeado)
+  c.fillStyle = color;
+  roundRect(c, w*0.12, h*0.18, w*0.76, h*0.75, w*0.16);
+  c.fill();
+  c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1.5; c.stroke();
+  // cabeza / cara ligeramente destacada arriba
+  c.beginPath();
+  c.ellipse(w*0.5, h*0.32, w*0.32, h*0.24, 0, 0, Math.PI*2);
+  c.fillStyle = 'rgba(255,255,255,0.5)';
+  c.fill();
+  // ojos
+  c.fillStyle = '#222';
+  c.beginPath(); c.arc(w*0.38, h*0.32, w*0.06, 0, Math.PI*2); c.fill();
+  c.beginPath(); c.arc(w*0.62, h*0.32, w*0.06, 0, Math.PI*2); c.fill();
+  // boca
+  c.fillStyle = '#c0392b';
+  c.fillRect(w*0.38, h*0.5, w*0.24, h*0.06);
+  // piernas (animadas)
+  c.fillStyle = '#3a3a3a';
+  c.fillRect(w*0.2, h*0.88 + legOffsets[0], w*0.18, h*0.12);
+  c.fillRect(w*0.62, h*0.88 + legOffsets[1], w*0.18, h*0.12);
+  c.restore();
+}
+
+function roundRect(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x+r, y);
+  c.arcTo(x+w, y, x+w, y+h, r);
+  c.arcTo(x+w, y+h, x, y+h, r);
+  c.arcTo(x, y+h, x, y, r);
+  c.arcTo(x, y, x+w, y, r);
+  c.closePath();
+}
+
+function drawBirdShape(c, x, y, w, h, bodyColor, beakColor, frameIndex) {
+  frameIndex = frameIndex || 0;
+  c.save();
+  c.translate(x, y);
+  // el ave vuela de derecha a izquierda: se invierte horizontalmente para que
+  // el pico (dibujado hacia la derecha) quede mirando en el sentido de vuelo
+  c.translate(w, 0);
+  c.scale(-1, 1);
+  const flap = [-0.35, 0, 0.35][safeMod(frameIndex, 3)];
+  // cuerpo
+  c.fillStyle = bodyColor;
+  c.beginPath();
+  c.ellipse(w*0.55, h*0.5, w*0.42, h*0.32, 0, 0, Math.PI*2);
+  c.fill();
+  // ala (bate segun flap)
+  c.fillStyle = bodyColor;
+  c.beginPath();
+  c.moveTo(w*0.5, h*0.4);
+  c.quadraticCurveTo(w*0.2, h*(0.15 - flap), w*0.02, h*(0.35 - flap*1.4));
+  c.quadraticCurveTo(w*0.3, h*0.55, w*0.5, h*0.5);
+  c.closePath();
+  c.fill();
+  // cola
+  c.beginPath();
+  c.moveTo(w*0.18, h*0.5);
+  c.lineTo(-w*0.05, h*0.36);
+  c.lineTo(-w*0.05, h*0.62);
+  c.closePath();
+  c.fill();
+  // pico
+  c.fillStyle = beakColor;
+  c.beginPath();
+  c.moveTo(w*0.94, h*0.46);
+  c.lineTo(w*1.08, h*0.5);
+  c.lineTo(w*0.94, h*0.56);
+  c.closePath();
+  c.fill();
+  // ojo
+  c.fillStyle = '#111';
+  c.beginPath(); c.arc(w*0.78, h*0.42, w*0.035, 0, Math.PI*2); c.fill();
+  c.restore();
+}
+
+function drawBatShape(c, x, y, w, h, color, frameIndex) {
+  frameIndex = frameIndex || 0;
+  c.save();
+  c.translate(x, y);
+  const flap = [-0.3, 0, 0.3][safeMod(frameIndex, 3)];
+  c.fillStyle = color;
+  // cuerpo
+  c.beginPath();
+  c.ellipse(w*0.5, h*0.5, w*0.16, h*0.26, 0, 0, Math.PI*2);
+  c.fill();
+  // orejas
+  c.beginPath();
+  c.moveTo(w*0.42, h*0.28); c.lineTo(w*0.38, h*0.1); c.lineTo(w*0.48, h*0.24); c.closePath(); c.fill();
+  c.beginPath();
+  c.moveTo(w*0.58, h*0.28); c.lineTo(w*0.62, h*0.1); c.lineTo(w*0.52, h*0.24); c.closePath(); c.fill();
+  // ala izquierda
+  c.beginPath();
+  c.moveTo(w*0.4, h*0.45);
+  c.quadraticCurveTo(w*0.15, h*(0.15-flap), w*0.02, h*(0.5-flap*0.6));
+  c.quadraticCurveTo(w*0.1, h*0.55, w*0.2, h*0.5);
+  c.quadraticCurveTo(w*0.3, h*0.62, w*0.4, h*0.55);
+  c.closePath(); c.fill();
+  // ala derecha
+  c.beginPath();
+  c.moveTo(w*0.6, h*0.45);
+  c.quadraticCurveTo(w*0.85, h*(0.15-flap), w*0.98, h*(0.5-flap*0.6));
+  c.quadraticCurveTo(w*0.9, h*0.55, w*0.8, h*0.5);
+  c.quadraticCurveTo(w*0.7, h*0.62, w*0.6, h*0.55);
+  c.closePath(); c.fill();
+  // ojos
+  c.fillStyle = '#f5525b';
+  c.beginPath(); c.arc(w*0.44, h*0.46, w*0.03, 0, Math.PI*2); c.fill();
+  c.beginPath(); c.arc(w*0.56, h*0.46, w*0.03, 0, Math.PI*2); c.fill();
+  c.restore();
+}
+
+function drawDroneShape(c, x, y, w, h, bodyColor, accentColor, frameIndex) {
+  frameIndex = frameIndex || 0;
+  c.save();
+  c.translate(x, y);
+  // brazos
+  c.strokeStyle = bodyColor; c.lineWidth = Math.max(2, w*0.04);
+  c.beginPath();
+  c.moveTo(w*0.1, h*0.15); c.lineTo(w*0.35, h*0.4);
+  c.moveTo(w*0.9, h*0.15); c.lineTo(w*0.65, h*0.4);
+  c.moveTo(w*0.1, h*0.85); c.lineTo(w*0.35, h*0.6);
+  c.moveTo(w*0.9, h*0.85); c.lineTo(w*0.65, h*0.6);
+  c.stroke();
+  // helices (3 posiciones de giro discretas)
+  const propR = w*0.11;
+  const spinAngle = [0, Math.PI/3, Math.PI*2/3][safeMod(frameIndex, 3)];
+  c.fillStyle = 'rgba(120,120,120,0.5)';
+  [[w*0.1,h*0.15],[w*0.9,h*0.15],[w*0.1,h*0.85],[w*0.9,h*0.85]].forEach(p => {
+    c.beginPath(); c.ellipse(p[0], p[1], propR, propR*0.35, spinAngle, 0, Math.PI*2); c.fill();
+  });
+  // cuerpo
+  c.fillStyle = bodyColor;
+  roundRect(c, w*0.28, h*0.32, w*0.44, h*0.36, w*0.08);
+  c.fill();
+  c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1; c.stroke();
+  // luces
+  c.fillStyle = accentColor;
+  c.beginPath(); c.arc(w*0.42, h*0.5, w*0.045, 0, Math.PI*2); c.fill();
+  c.beginPath(); c.arc(w*0.58, h*0.5, w*0.045, 0, Math.PI*2); c.fill();
+  c.restore();
+}
+
+function drawCapeShape(c, x, y, w, h, robeColor, hoodLightColor, goldColor, frameIndex) {
+  frameIndex = frameIndex || 0;
+  const bob = [0, -1, 0][safeMod(frameIndex, 3)] * h * 0.02; // ligero balanceo al flotar
+  c.save();
+  c.translate(x, y + bob);
+
+  // --- capucha (parte superior redondeada, más ancha arriba) ---
+  c.fillStyle = robeColor;
+  c.beginPath();
+  c.moveTo(w*0.30, h*0.30);
+  c.quadraticCurveTo(w*0.20, h*0.02, w*0.50, h*0.00);
+  c.quadraticCurveTo(w*0.80, h*0.02, w*0.70, h*0.30);
+  c.quadraticCurveTo(w*0.62, h*0.20, w*0.50, h*0.20);
+  c.quadraticCurveTo(w*0.38, h*0.20, w*0.30, h*0.30);
+  c.closePath();
+  c.fill();
+
+  // realce claro en un lateral de la capucha (igual que la referencia)
+  c.fillStyle = hoodLightColor;
+  c.beginPath();
+  c.moveTo(w*0.30, h*0.30);
+  c.quadraticCurveTo(w*0.24, h*0.08, w*0.46, h*0.01);
+  c.quadraticCurveTo(w*0.34, h*0.10, w*0.38, h*0.28);
+  c.closePath();
+  c.fill();
+
+  // hueco oscuro del rostro, oculto bajo la capucha
+  c.fillStyle = '#0a0810';
+  c.beginPath();
+  c.ellipse(w*0.5, h*0.24, w*0.13, h*0.11, 0, 0, Math.PI*2);
+  c.fill();
+
+  // --- hombros / cuerpo de la túnica (se ensancha hacia abajo) ---
+  c.fillStyle = robeColor;
+  c.beginPath();
+  c.moveTo(w*0.30, h*0.32);
+  c.lineTo(w*0.16, h*0.48);
+  c.lineTo(w*0.24, h*0.58);
+  c.lineTo(w*0.18, h*0.95);
+  c.lineTo(w*0.82, h*0.95);
+  c.lineTo(w*0.76, h*0.58);
+  c.lineTo(w*0.84, h*0.48);
+  c.lineTo(w*0.70, h*0.32);
+  c.quadraticCurveTo(w*0.6, h*0.42, w*0.5, h*0.42);
+  c.quadraticCurveTo(w*0.4, h*0.42, w*0.30, h*0.32);
+  c.closePath();
+  c.fill();
+
+  // pliegue central (línea de sombra a lo largo de la túnica)
+  c.strokeStyle = 'rgba(0,0,0,0.25)';
+  c.lineWidth = Math.max(1, w*0.02);
+  c.beginPath();
+  c.moveTo(w*0.5, h*0.44);
+  c.lineTo(w*0.5, h*0.9);
+  c.stroke();
+
+  // detalle dorado en el pecho (broche)
+  c.fillStyle = goldColor;
+  c.fillRect(w*0.42, h*0.46, w*0.16, h*0.025);
+  c.fillRect(w*0.42, h*0.50, w*0.16, h*0.025);
+  c.fillRect(w*0.42, h*0.54, w*0.16, h*0.025);
+
+  // filo de un arma asomando por debajo de la túnica
+  c.fillStyle = '#e8e8e8';
+  c.beginPath();
+  c.moveTo(w*0.56, h*0.78);
+  c.lineTo(w*0.60, h*0.78);
+  c.lineTo(w*0.585, h*0.97);
+  c.closePath();
+  c.fill();
+
+  c.restore();
+}
+
+function drawCloudShape(c, x, y, w, h, color, alpha) {
+  c.save();
+  c.globalAlpha = alpha;
+  c.fillStyle = color;
+  const puffs = [
+    [0.22,0.55,0.20],[0.38,0.35,0.26],[0.55,0.42,0.28],
+    [0.72,0.5,0.22],[0.85,0.6,0.16],[0.15,0.68,0.14],
+    [0.5,0.65,0.24],[0.65,0.68,0.18]
+  ];
+  puffs.forEach(p => {
+    c.beginPath();
+    c.ellipse(x + w*p[0], y + h*p[1], w*p[2], h*p[2]*1.15, 0, 0, Math.PI*2);
+    c.fill();
+  });
+  c.beginPath();
+  c.ellipse(x + w*0.5, y + h*0.72, w*0.42, h*0.16, 0, 0, Math.PI*2);
+  c.fill();
+  c.restore();
+}
+
+function drawEntitySprite(c, key, x, y, w, h, phaseSeconds, fallbackFn) {
+  const frames = SPRITE_IMAGES[key].filter(Boolean);
+  if (frames.length > 0) {
+    const idx = safeMod(Math.floor(phaseSeconds * CFG.animFps), frames.length);
+    const img = frames[idx];
+    // encaja la imagen dentro de w x h manteniendo proporcion (contain), centrada
+    const ir = img.width / img.height, br = w / h;
+    let dw, dh;
+    if (ir > br) { dw = w; dh = w / ir; } else { dh = h; dw = h * ir; }
+    c.drawImage(img, x + (w-dw)/2, y + (h-dh)/2, dw, dh);
+  } else {
+    const frameIndex = safeMod(Math.floor(phaseSeconds * CFG.animFps), 3);
+    fallbackFn(frameIndex);
+  }
+}
+
+function drawTilePlatform(c, p, tileSize, brickColor, mortarColor) {
+  const visH = Math.min(p.h, H - p.y);
+  c.save();
+  c.beginPath();
+  c.rect(p.x, p.y, p.w, visH);
+  c.clip();
+  c.fillStyle = mortarColor;
+  c.fillRect(p.x, p.y, p.w, visH);
+  let row = 0;
+  for (let ty = p.y; ty < p.y + visH; ty += tileSize) {
+    const offset = (row % 2 === 0) ? 0 : tileSize / 2;
+    for (let tx = p.x - tileSize + offset; tx < p.x + p.w; tx += tileSize) {
+      c.fillStyle = brickColor;
+      c.fillRect(tx + 1, ty + 1, tileSize - 2, tileSize - 2);
+    }
+    row++;
+  }
+  c.restore();
+}
+
+// ============================================================
+// PREVIEWS (pestaña Sprites)
+// ============================================================
+function renderPreviews() {
+  const t = performance.now() / 250;
+
+  const pp = document.getElementById('prev-player').getContext('2d');
+  pp.clearRect(0,0,90,90);
+  drawEntitySprite(pp, 'player', 4, 4, 82, 82, t, (fi) => drawPlayerShape(pp, 4, 4, 82, 82, COLORS.player, fi));
+
+  const pb = document.getElementById('prev-bird').getContext('2d');
+  pb.clearRect(0,0,90,90);
+  drawEntitySprite(pb, 'bird', 4, 22, 82, 46, t, (fi) => drawBirdShape(pb, 4, 22, 82, 46, COLORS.bird, COLORS.birdBeak, fi));
+
+  const pbat = document.getElementById('prev-bat').getContext('2d');
+  pbat.clearRect(0,0,90,90);
+  drawEntitySprite(pbat, 'bat', 4, 4, 82, 82, t, (fi) => drawBatShape(pbat, 4, 4, 82, 82, COLORS.bat, fi));
+
+  const pd = document.getElementById('prev-drone').getContext('2d');
+  pd.clearRect(0,0,90,90);
+  drawEntitySprite(pd, 'drone', 2, 22, 86, 46, t, (fi) => drawDroneShape(pd, 2, 22, 86, 46, COLORS.drone, COLORS.droneAccent, fi));
+
+  const pt = document.getElementById('prev-tile').getContext('2d');
+  pt.clearRect(0,0,140,90);
+  drawTilePlatform(pt, {x:0,y:0,w:140,h:90}, CFG.tileSize, COLORS.tileBrick, COLORS.tileMortar);
+
+  const pc = document.getElementById('prev-cloud').getContext('2d');
+  pc.clearRect(0,0,140,90);
+  drawCloudShape(pc, 0, 0, 140, 90, COLORS.cloud, CFG.cloudOpacity);
+
+  const pl = document.getElementById('prev-purple').getContext('2d');
+  pl.clearRect(0,0,90,90);
+  drawEntitySprite(pl, 'purple', 4, 4, 82, 82, t, (fi) => drawCapeShape(pl, 4, 4, 82, 82, COLORS.purple, COLORS.purpleLight, COLORS.purpleGold, fi));
+}
+requestAnimationFrame(function loopPrev(){ renderPreviews(); requestAnimationFrame(loopPrev); });
+
+// ============================================================
+// BINDINGS DE CONTROLES (config + colores)
+// ============================================================
+function bindNumber(id, obj, key) {
+  const el = document.getElementById(id);
+  const out = document.getElementById('v_' + id);
+  if (!el) return;
+  el.value = obj[key];
+  if (out) out.textContent = obj[key];
+  el.addEventListener('input', () => {
+    obj[key] = parseFloat(el.value);
+    if (out) out.textContent = obj[key];
+  });
+}
+function bindColor(id, obj, key) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.value = obj[key];
+  el.addEventListener('input', () => { obj[key] = el.value; });
+}
+function bindCheckbox(id, obj, key) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.checked = obj[key];
+  el.addEventListener('change', () => { obj[key] = el.checked; });
+}
+
+[
+  'cfg_gravity','cfg_jumpVelocity','cfg_scrollSpeedBase','cfg_scrollAccel',
+  'cfg_phaseBirdsOnly','cfg_phaseBirdsAndBats','cfg_phaseAll',
+  'cfg_birdSpeed','cfg_birdSpawnMin','cfg_birdSpawnMax',
+  'cfg_batSineAmp','cfg_batSineSpeed','cfg_batSpawnMin','cfg_batSpawnMax',
+  'cfg_droneSpeed','cfg_droneArcAmp','cfg_droneSpawnMin','cfg_droneSpawnMax',
+  'cfg_cloudSpeedFactor','cfg_cloudSizeMin','cfg_cloudSizeMax','cfg_cloudSpawnMin','cfg_cloudSpawnMax','cfg_cloudOpacity',
+  'cfg_purpleSpawnInterval','cfg_capeImmunityDuration','cfg_capeSpeedFactor','cfg_capeSizeMin','cfg_capeSizeMax','cfg_immuneOpacity',
+  'cfg_platGapMin','cfg_platGapMax','cfg_platYVar','cfg_platBigChance','cfg_platYMinPct','cfg_platYMaxPct',
+  'cfg_tileSize','cfg_animFps'
+].forEach(id => bindNumber(id, CFG, id.replace('cfg_','')));
+
+[
+  ['col_player','player'], ['col_playerNoJump','playerNoJump'],
+  ['col_bird','bird'], ['col_birdBeak','birdBeak'],
+  ['col_bat','bat'],
+  ['col_drone','drone'], ['col_droneAccent','droneAccent'],
+  ['col_tileBrick','tileBrick'], ['col_tileMortar','tileMortar'],
+  ['col_cloud','cloud'],
+  ['col_purple','purple'],
+  ['col_purpleLight','purpleLight'],
+  ['col_purpleGold','purpleGold'],
+].forEach(([id,key]) => bindColor(id, COLORS, key));
+
+bindCheckbox('cfg_platformsSolid', CFG, 'platformsSolid');
+bindCheckbox('cfg_autoReachLimit', CFG, 'autoReachLimit');
+
+const applyBtn = document.getElementById('applyRestart');
+const savedMsg = document.getElementById('savedMsg');
+let savedMsgTimeout = null;
+applyBtn.addEventListener('click', () => {
+  resetGame();
+  state = 'ready'; // aplicar config no debe arrancar la partida por sí solo
+  applyBtn.classList.add('flash');
+  savedMsg.classList.add('show');
+  clearTimeout(savedMsgTimeout);
+  savedMsgTimeout = setTimeout(() => {
+    applyBtn.classList.remove('flash');
+    savedMsg.classList.remove('show');
+  }, 1800);
+});
+
+// ============================================================
+// FONDO SUBIDO POR EL USUARIO (pestaña Pantalla)
+// ============================================================
+const dropZone = document.getElementById('dropZone');
+const bgFileInput = document.getElementById('bgFileInput');
+const bgPreview = document.getElementById('bgPreview');
+const removeBgBtn = document.getElementById('removeBg');
+
+dropZone.addEventListener('click', () => bgFileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.background = '#1c2c40'; });
+dropZone.addEventListener('dragleave', () => { dropZone.style.background = ''; });
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.style.background = '';
+  if (e.dataTransfer.files[0]) loadBgFile(e.dataTransfer.files[0]);
+});
+bgFileInput.addEventListener('change', () => {
+  if (bgFileInput.files[0]) loadBgFile(bgFileInput.files[0]);
+});
+removeBgBtn.addEventListener('click', () => {
+  bgImage = null;
+  bgPreview.style.display = 'none';
+  removeBgBtn.style.display = 'none';
+});
+
+function loadBgFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => { bgImage = img; };
+    img.src = ev.target.result;
+    bgPreview.src = ev.target.result;
+    bgPreview.style.display = 'block';
+    removeBgBtn.style.display = 'inline-block';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ============================================================
+// ESTADO DEL JUEGO
+// ============================================================
+let state = 'ready';
+let elapsed = 0;
+let meters = 0;
+let scrollSpeed = CFG.scrollSpeedBase;
+
+let player = { x: CFG.playerScreenX, y: 0, vy: 0, w: CFG.playerSize, h: CFG.playerSize, grounded: false, jumpsRemaining: 2, immunityRemaining: 0 };
+let playerPhase = 0;
+let platforms = [], birds = [], bats = [], drones = [], clouds = [], capes = [];
+let nextBirdIn = 0, nextBatIn = 999, nextDroneIn = 999, nextCloudIn = 0, nextPurpleIn = 0, nextBellTickIn = 0;
+
+function maxReachableJumpHeight() {
+  // Altura máxima que el jugador puede ganar con el doble salto, a partir de la
+  // física actual (velocidad de salto y gravedad). Se calcula la altura de un
+  // salto simple (v²/2g) y se asume que el segundo salto se pulsa justo en el
+  // pico del primero, lo que en la práctica añade otro tramo similar.
+  // Se aplica un margen de seguridad (0.8) para no generar algo "al límite exacto"
+  // que dependa de un timing perfecto e imposible de ejecutar de forma fiable.
+  const v = -CFG.jumpVelocity;
+  const singleJump = (v * v) / (2 * CFG.gravity);
+  const doubleJump = singleJump * 1.8; // el segundo salto no parte de v=0 en la práctica, así que no llega a sumar 2x limpio
+  return doubleJump * 0.8;
+}
+
+function maxReachableGap() {
+  // Tiempo que el jugador puede permanecer en el aire con el doble salto
+  // (ida y vuelta de un salto simple, más el tramo extra del segundo salto).
+  // Ese tiempo, multiplicado por la velocidad de scroll ACTUAL (que va
+  // acelerando con la partida), da la distancia máxima de hueco que puede
+  // cruzar antes de tocar suelo otra vez. Con margen de seguridad, igual
+  // que en la altura.
+  const v = -CFG.jumpVelocity;
+  const singleAirtime = (2 * v) / CFG.gravity;
+  const doubleAirtime = singleAirtime * 1.8;
+  const safeAirtime = doubleAirtime * 0.8;
+  return Math.max(CFG.platGapMin, scrollSpeed * safeAirtime);
+}
+
+function genNextPlatform(prevX, prevW, prevY) {
+  const gap = CFG.autoReachLimit
+    ? Math.min(rand(CFG.platGapMin, CFG.platGapMax), maxReachableGap())
+    : rand(CFG.platGapMin, CFG.platGapMax);
+  const x = prevX + prevW + gap;
+  const bigRoll = Math.random();
+  let deltaY;
+  if (bigRoll < CFG.platBigChance * 0.5) {
+    deltaY = -rand(CFG.platYVar * 1.3, CFG.platYVar * 2.4);
+  } else if (bigRoll < CFG.platBigChance) {
+    deltaY = rand(CFG.platYVar * 1.3, CFG.platYVar * 2.4);
+  } else {
+    deltaY = rand(-CFG.platYVar, CFG.platYVar);
+  }
+  // Si la plataforma sale más alta (deltaY negativo), y el cálculo automático
+  // está activado, nunca se pide más altura de la que el doble salto puede
+  // alcanzar realmente (se recorta al máximo alcanzable). Si el jugador
+  // desactivó el cálculo automático, se respeta el valor tal cual, sin límite.
+  if (CFG.autoReachLimit) {
+    const maxUp = maxReachableJumpHeight();
+    if (deltaY < -maxUp) deltaY = -maxUp;
+  }
+
+  const yMin = H * (CFG.platYMinPct / 100);
+  const yMax = H * (CFG.platYMaxPct / 100);
+  const y = clamp(prevY + deltaY, yMin, yMax);
+  const w = rand(80, 220);
+  const h = H - y + 40; // siempre llega hasta el fondo de la pantalla
+  return {x, y, w, h};
+}
+
+function resetGame() {
+  state = 'playing';
+  elapsed = 0;
+  meters = 0;
+  scrollSpeed = CFG.scrollSpeedBase;
+  birds = []; bats = []; drones = []; clouds = []; capes = [];
+  nextBirdIn = rand(CFG.birdSpawnMin, CFG.birdSpawnMax);
+  nextBatIn = 999; nextDroneIn = 999;
+  nextCloudIn = rand(CFG.cloudSpawnMin, CFG.cloudSpawnMax);
+  nextPurpleIn = CFG.purpleSpawnInterval;
+  nextBellTickIn = 0;
+
+  platforms = [{x:0, y:H-140, w:400, h:300}];
+  while (true) {
+    const last = platforms[platforms.length-1];
+    if (last.x + last.w >= W + 300) break;
+    platforms.push(genNextPlatform(last.x, last.w, last.y));
+  }
+  player.x = CFG.playerScreenX;
+  player.y = platforms[0].y - player.h;
+  player.vy = 0;
+  player.grounded = true;
+  player.jumpsRemaining = 2;
+  player.immunityRemaining = 0;
+}
+
+function doJump() {
+  if (state === 'ready') { state = 'playing'; return; } // el primer toque solo arranca, no salta
+  if (player.jumpsRemaining > 0) {
+    player.vy = CFG.jumpVelocity;
+    player.grounded = false;
+    player.jumpsRemaining--;
+    playJumpSound();
+  }
+}
+
+// ============================================================
+// RANKING (top 10, persistente en este navegador vía localStorage)
+// ============================================================
+const LEADERBOARD_KEY = 'ytujRunnerLeaderboard_v1';
+function loadLeaderboard() {
+  try {
+    const raw = localStorage.getItem(LEADERBOARD_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) { return []; }
+}
+function saveLeaderboardList(list) {
+  try { localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(list)); } catch (e) {}
+}
+function qualifiesForLeaderboard(score) {
+  const board = loadLeaderboard();
+  if (board.length < 10) return true;
+  return score > board[board.length - 1].score;
+}
+function insertScoreIntoLeaderboard(initialsStr, score) {
+  const board = loadLeaderboard();
+  board.push({ initials: initialsStr, score });
+  board.sort((a, b) => b.score - a.score);
+  const trimmed = board.slice(0, 10);
+  saveLeaderboardList(trimmed);
+  return trimmed;
+}
+
+let initials = ['A', 'A', 'A'];
+let initialsActiveSlot = 0;
+let initialsTimer = 30;
+let pendingScore = 0;
+let lastLeaderboard = [];
+let justAddedIndex = -1;
+
+function nextLetter(ch, dir) {
+  const A = 65, Z = 90;
+  let code = ch.charCodeAt(0) + dir;
+  if (code > Z) code = A;
+  if (code < A) code = Z;
+  return String.fromCharCode(code);
+}
+function cycleInitialLetter(dir) {
+  initials[initialsActiveSlot] = nextLetter(initials[initialsActiveSlot], dir);
+}
+function moveInitialsSlot(dir) {
+  initialsActiveSlot = clamp(initialsActiveSlot + dir, 0, 2);
+}
+function confirmInitials() {
+  const str = initials.join('');
+  const board = insertScoreIntoLeaderboard(str, pendingScore);
+  lastLeaderboard = board;
+  justAddedIndex = board.findIndex(e => e.initials === str && e.score === pendingScore);
+  state = 'leaderboard';
+}
+function dismissLeaderboard() {
+  resetGame();
+  state = 'ready';
+}
+
+// ============================================================
+// ENTRADA: teclado, clic y tacto, enrutados según el estado actual
+// ============================================================
+function getCanvasPos(evt) {
+  const rect = canvas.getBoundingClientRect();
+  const t = evt.touches && evt.touches[0];
+  const clientX = t ? t.clientX : evt.clientX;
+  const clientY = t ? t.clientY : evt.clientY;
+  return { x: (clientX - rect.left) * (W / rect.width), y: (clientY - rect.top) * (H / rect.height) };
+}
+function pointInRect(pos, r) {
+  return pos.x >= r.x && pos.x <= r.x + r.w && pos.y >= r.y && pos.y <= r.y + r.h;
+}
+function getInitialsLayout() {
+  const boxW = 70, boxH = 90, gap = 30;
+  const totalW = boxW * 3 + gap * 2;
+  const startX = W / 2 - totalW / 2;
+  const boxY = H / 2 - boxH / 2;
+  const boxes = [0, 1, 2].map(i => ({ x: startX + i * (boxW + gap), y: boxY, w: boxW, h: boxH }));
+  const upArrows = boxes.map(b => ({ x: b.x, y: b.y - 46, w: boxW, h: 34 }));
+  const downArrows = boxes.map(b => ({ x: b.x, y: b.y + boxH + 12, w: boxW, h: 34 }));
+  const leftArrow = { x: startX - 62, y: boxY + boxH / 2 - 24, w: 48, h: 48 };
+  const rightArrow = { x: startX + totalW + 14, y: boxY + boxH / 2 - 24, w: 48, h: 48 };
+  const confirmBtn = { x: W / 2 - 80, y: boxY + boxH + 60, w: 160, h: 42 };
+  return { boxes, upArrows, downArrows, leftArrow, rightArrow, confirmBtn };
+}
+function handleCanvasPress(evt) {
+  if (state === 'entering_initials') {
+    const pos = getCanvasPos(evt);
+    const L = getInitialsLayout();
+    for (let i = 0; i < 3; i++) {
+      if (pointInRect(pos, L.upArrows[i])) { initialsActiveSlot = i; cycleInitialLetter(1); return; }
+      if (pointInRect(pos, L.downArrows[i])) { initialsActiveSlot = i; cycleInitialLetter(-1); return; }
+      if (pointInRect(pos, L.boxes[i])) { initialsActiveSlot = i; return; }
+    }
+    if (pointInRect(pos, L.leftArrow)) { moveInitialsSlot(-1); return; }
+    if (pointInRect(pos, L.rightArrow)) { moveInitialsSlot(1); return; }
+    if (pointInRect(pos, L.confirmBtn)) { confirmInitials(); return; }
+    return;
+  }
+  if (state === 'leaderboard') { dismissLeaderboard(); return; }
+  doJump();
+}
+window.addEventListener('keydown', e => {
+  if (state === 'entering_initials') {
+    if (e.code === 'ArrowUp')    { e.preventDefault(); cycleInitialLetter(1); }
+    else if (e.code === 'ArrowDown')  { e.preventDefault(); cycleInitialLetter(-1); }
+    else if (e.code === 'ArrowLeft')  { e.preventDefault(); moveInitialsSlot(-1); }
+    else if (e.code === 'ArrowRight') { e.preventDefault(); moveInitialsSlot(1); }
+    else if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); confirmInitials(); }
+    return;
+  }
+  if (state === 'leaderboard') {
+    if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowUp') { e.preventDefault(); dismissLeaderboard(); }
+    return;
+  }
+  if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); doJump(); }
+});
+canvas.addEventListener('mousedown', handleCanvasPress);
+canvas.addEventListener('touchstart', e => { e.preventDefault(); handleCanvasPress(e); }, {passive:false});
+
+// ============================================================
+// SONIDO (sintetizado con Web Audio API, sin ficheros externos)
+// ============================================================
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function beep({freq=440, startFreq=null, endFreq=null, duration=0.15, type='sine', gain=0.15, attack=0.005}) {
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = type;
+  if (startFreq && endFreq) {
+    osc.frequency.setValueAtTime(startFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(endFreq, 1), now + duration);
+  } else {
+    osc.frequency.setValueAtTime(freq, now);
+  }
+  g.gain.setValueAtTime(0, now);
+  g.gain.linearRampToValueAtTime(gain, now + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+  osc.connect(g); g.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + duration + 0.02);
+}
+function playJumpSound()  { beep({startFreq:320, endFreq:760, duration:0.12, type:'square', gain:0.10}); }
+function playBirdSound()  { beep({startFreq:1000, endFreq:450, duration:0.10, type:'sawtooth', gain:0.08});
+                             setTimeout(() => beep({startFreq:800, endFreq:350, duration:0.08, type:'sawtooth', gain:0.06}), 70); }
+function playBatSound()   { beep({startFreq:2200, endFreq:1100, duration:0.14, type:'sine', gain:0.13}); }
+function playDroneSound() { beep({freq:150, duration:0.32, type:'square', gain:0.13});
+                             beep({freq:165, duration:0.32, type:'square', gain:0.09}); }
+function playDeathSound() { beep({startFreq:420, endFreq:70, duration:0.5, type:'sawtooth', gain:0.16}); }
+function playBellTick()   { beep({freq:1050, duration:0.14, type:'sine', gain:0.09, attack:0.005}); }
+
+function killPlayer() {
+  if (state !== 'playing') return;
+  playDeathSound();
+  pendingScore = Math.floor(meters);
+  if (qualifiesForLeaderboard(pendingScore)) {
+    initials = ['A', 'A', 'A'];
+    initialsActiveSlot = 0;
+    initialsTimer = 30;
+    state = 'entering_initials';
+  } else {
+    lastLeaderboard = loadLeaderboard();
+    justAddedIndex = -1;
+    state = 'leaderboard';
+  }
+}
+
+function spawnBird() { birds.push({x:W+20, y:rand(20,H/3), w:76, h:52, phase:0}); playBirdSound(); }
+function spawnBat() {
+  const baseY = rand(H/3, H*0.92);
+  bats.push({x:W+20, baseY, y:baseY, w:64, h:60, seed:rand(0,10), phase:0});
+  playBatSound();
+}
+function spawnDrone() {
+  const baseY = rand(H/3, H*(2/3));
+  drones.push({x:W+30, y:baseY, baseY, w:92, h:60, travelled:0, totalDist:W+200, phase:0});
+  playDroneSound();
+}
+function spawnCloud() {
+  const size = rand(CFG.cloudSizeMin, CFG.cloudSizeMax);
+  clouds.push({x:W+size, y:rand(H*0.02, H*0.42), w:size, h:size*0.55});
+}
+function spawnCape() {
+  const size = rand(CFG.capeSizeMin, CFG.capeSizeMax);
+  // Se coloca siempre por encima del edificio más alto que haya AHORA en
+  // pantalla (el de menor "y"), así nunca aparece dentro o detrás de un
+  // sólido. Y se sitúa dentro de lo que el doble salto puede alcanzar desde
+  // ese edificio, para que siempre exista una posibilidad real de cogerla
+  // (no garantizada desde cualquier punto, pero sí alcanzable desde el más alto).
+  const topPlatformY = platforms.length ? Math.min(...platforms.map(p => p.y)) : H * 0.5;
+  const reach = maxReachableJumpHeight();
+  const baseY = clamp(topPlatformY - player.h - rand(20, reach * 0.6), H * 0.05, H * 0.85);
+  capes.push({x:W+size, baseY, y:baseY, w:size, h:size, phase:0});
+}
+
+function rectsOverlap(a,b){ return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y; }
+function shrinkRect(e, marginFrac) {
+  const mx = e.w * marginFrac, my = e.h * marginFrac;
+  return { x: e.x + mx, y: e.y + my, w: e.w - mx*2, h: e.h - my*2 };
+}
+
+function update(dt) {
+  if (state === 'entering_initials') {
+    initialsTimer -= dt;
+    if (initialsTimer <= 0) { initialsTimer = 0; confirmInitials(); }
+    return;
+  }
+  if (state !== 'playing') return;
+  // Normaliza el movimiento a "unidades por segundo real", en vez de "por frame".
+  // Sin esto, en un móvil a 120Hz el juego avanzaba al doble de velocidad que en
+  // uno a 60Hz, porque cada valor se sumaba una vez por llamada a update(), y esa
+  // función se llama tantas veces por segundo como el refresco de pantalla del
+  // dispositivo. dtScale=1 equivale a 60fps (el ritmo con el que están ajustados
+  // todos los valores por defecto).
+  const dtScale = dt * 60;
+  elapsed += dt;
+  scrollSpeed += CFG.scrollAccel * dtScale;
+  playerPhase += dt;
+  meters += scrollSpeed * dt * 3;
+
+  for (const p of platforms) p.x -= scrollSpeed * dtScale;
+  platforms = platforms.filter(p => p.x + p.w > -20);
+  const last = platforms[platforms.length-1];
+  if (last.x + last.w < W + 250) platforms.push(genNextPlatform(last.x, last.w, last.y));
+
+  player.vy += CFG.gravity * dtScale;
+  player.y += player.vy * dtScale;
+  const wasGrounded = player.grounded;
+  let onPlatform = null;
+  
+  const pBox = { x: player.x, y: player.y, w: player.w, h: player.h };
+  for (const p of platforms) {
+    if (pBox.x < p.x + p.w && pBox.x + pBox.w > p.x &&
+        pBox.y < p.y + p.h && pBox.y + pBox.h > p.y) {
+      
+      const overlapTop = pBox.y + pBox.h - p.y;
+      const overlapBottom = p.y + p.h - pBox.y;
+      const overlapLeft = pBox.x + pBox.w - p.x;
+      const overlapRight = p.x + p.w - pBox.x;
+      
+      const minOverlap = Math.min(overlapTop, overlapBottom, overlapLeft, overlapRight);
+      
+      if (minOverlap === overlapTop && player.vy >= 0) {
+        // Viene desde arriba (aterriza en la plataforma)
+        onPlatform = p;
+        player.y = p.y - player.h;
+        player.vy = 0;
+      } else if (minOverlap === overlapBottom && player.vy < 0) {
+        // Viene desde abajo (rebota)
+        player.y = p.y + p.h;
+        player.vy = 0;
+      } else if (CFG.platformsSolid) {
+        // El edificio es sólido y macizo: el jugador no lo atraviesa. Como es el
+        // edificio el que se mueve (scroll) y el jugador no, el efecto real es que
+        // el edificio lo arrastra consigo mientras la gravedad sigue tirando de él
+        // hacia abajo con total normalidad (no se toca vy ni saltos).
+        if (minOverlap === overlapLeft) {
+          player.x = p.x - player.w;
+        } else if (minOverlap === overlapRight) {
+          player.x = p.x + p.w;
+        }
+        pBox.x = player.x;
+      }
+      // Si platformsSolid=false, el lateral es atravesable y no se hace nada.
+    }
+  }
+  
+  if (onPlatform) {
+    if (!wasGrounded) player.jumpsRemaining = 2;
+    player.grounded = true;
+  } else {
+    if (wasGrounded) player.jumpsRemaining = 1;
+    player.grounded = false;
+  }
+  // El jugador desaparece (game over) si sale de la pantalla, ya sea por abajo o arrastrado por un lado
+  if (player.y > H + 80 || player.x + player.w < -10 || player.x > W + 10) killPlayer();
+
+  nextBirdIn -= dt;
+  if (elapsed >= CFG.phaseBirdsOnly && nextBirdIn <= 0) { spawnBird(); nextBirdIn = rand(CFG.birdSpawnMin, CFG.birdSpawnMax); }
+  if (elapsed >= CFG.phaseBirdsAndBats) {
+    if (nextBatIn === 999) nextBatIn = 0.5;
+    nextBatIn -= dt;
+    if (nextBatIn <= 0) { spawnBat(); nextBatIn = rand(CFG.batSpawnMin, CFG.batSpawnMax); }
+  }
+  if (elapsed >= CFG.phaseAll) {
+    if (nextDroneIn === 999) nextDroneIn = 1.5;
+    nextDroneIn -= dt;
+    if (nextDroneIn <= 0) { spawnDrone(); nextDroneIn = rand(CFG.droneSpawnMin, CFG.droneSpawnMax); }
+  }
+  nextCloudIn -= dt;
+  if (nextCloudIn <= 0) { spawnCloud(); nextCloudIn = rand(CFG.cloudSpawnMin, CFG.cloudSpawnMax); }
+  nextPurpleIn -= dt;
+  if (nextPurpleIn <= 0) { spawnCape(); nextPurpleIn = CFG.purpleSpawnInterval; }
+
+  for (const b of birds) { b.x -= CFG.birdSpeed * dtScale; b.phase += dt; }
+  birds = birds.filter(b => b.x > -60);
+
+  for (const b of bats) {
+    b.x -= scrollSpeed * dtScale;
+    b.y = b.baseY + Math.sin(elapsed*CFG.batSineSpeed + b.seed) * CFG.batSineAmp;
+    b.phase += dt;
+  }
+  bats = bats.filter(b => b.x > -60);
+
+  for (const d of drones) {
+    d.x -= CFG.droneSpeed * dtScale;
+    const t = clamp(d.travelled / d.totalDist, 0, 1);
+    d.y = d.baseY - Math.sin(t*Math.PI) * CFG.droneArcAmp;
+    d.travelled += CFG.droneSpeed * dtScale;
+    d.phase += dt;
+  }
+  drones = drones.filter(d => d.x > -80);
+
+  const cloudSpeed = CFG.birdSpeed * CFG.cloudSpeedFactor;
+  for (const c of clouds) c.x -= cloudSpeed * dtScale;
+  clouds = clouds.filter(c => c.x + c.w > -20);
+
+  const capeSpeed = scrollSpeed * CFG.capeSpeedFactor;
+  for (const cp of capes) { cp.x -= capeSpeed * dtScale; cp.phase += dt; }
+  capes = capes.filter(cp => cp.x + cp.w > -20);
+
+  // Recogida de la capa: si el jugador la toca, gana inmunidad (no es un enemigo, no mata)
+  const pRect = shrinkRect(player, 0.12);
+  capes = capes.filter(cp => {
+    const collected = rectsOverlap(pRect, shrinkRect(cp, 0.12));
+    if (collected) {
+      player.immunityRemaining = CFG.capeImmunityDuration;
+      nextBellTickIn = 0; // que suene ya el primer "tic"
+    }
+    return !collected;
+  });
+
+  // Inmunidad activa: cuenta atrás + campanita que se acelera según va quedando menos tiempo
+  if (player.immunityRemaining > 0) {
+    player.immunityRemaining = Math.max(0, player.immunityRemaining - dt);
+    nextBellTickIn -= dt;
+    if (nextBellTickIn <= 0) {
+      playBellTick();
+      const frac = player.immunityRemaining / CFG.capeImmunityDuration; // 1 = recién cogida, 0 = a punto de acabar
+      nextBellTickIn = CFG.bellMinInterval + (CFG.bellMaxInterval - CFG.bellMinInterval) * frac;
+    }
+  }
+
+  // Choque con enemigos: no mata si el jugador está inmune
+  const hit = [...birds,...bats,...drones].some(e => rectsOverlap(pRect, shrinkRect(e, 0.22)));
+  if (hit && player.immunityRemaining <= 0) killPlayer();
+}
+
+function draw() {
+  ctx.clearRect(0,0,W,H);
+  if (bgImage) {
+    const ir = bgImage.width / bgImage.height, cr = W / H;
+    let dw, dh, dx, dy;
+    if (ir > cr) { dh = H; dw = H*ir; dx = (W-dw)/2; dy = 0; }
+    else { dw = W; dh = W/ir; dx = 0; dy = (H-dh)/2; }
+    ctx.drawImage(bgImage, dx, dy, dw, dh);
+  } else {
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#dfe6ee'); g.addColorStop(1,'#7d93bf');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  }
+
+  for (const p of platforms) drawTilePlatform(ctx, p, CFG.tileSize, COLORS.tileBrick, COLORS.tileMortar);
+
+  const playerColor = player.grounded ? COLORS.player : (player.jumpsRemaining > 0 ? COLORS.player : COLORS.playerNoJump);
+  const isImmune = player.immunityRemaining > 0;
+  if (isImmune) ctx.globalAlpha = CFG.immuneOpacity;
+  drawEntitySprite(ctx, 'player', player.x, player.y, player.w, player.h, playerPhase,
+    (fi) => drawPlayerShape(ctx, player.x, player.y, player.w, player.h, playerColor, fi));
+  if (isImmune) ctx.globalAlpha = 1;
+
+  for (const b of birds) drawEntitySprite(ctx, 'bird', b.x, b.y, b.w, b.h, b.phase,
+    (fi) => drawBirdShape(ctx, b.x, b.y, b.w, b.h, COLORS.bird, COLORS.birdBeak, fi));
+  for (const b of bats) drawEntitySprite(ctx, 'bat', b.x, b.y, b.w, b.h, b.phase,
+    (fi) => drawBatShape(ctx, b.x, b.y, b.w, b.h, COLORS.bat, fi));
+  for (const d of drones) drawEntitySprite(ctx, 'drone', d.x, d.y, d.w, d.h, d.phase,
+    (fi) => drawDroneShape(ctx, d.x, d.y, d.w, d.h, COLORS.drone, COLORS.droneAccent, fi));
+
+  for (const cp of capes) drawEntitySprite(ctx, 'purple', cp.x, cp.y, cp.w, cp.h, cp.phase,
+    (fi) => drawCapeShape(ctx, cp.x, cp.y, cp.w, cp.h, COLORS.purple, COLORS.purpleLight, COLORS.purpleGold, fi));
+
+  // nubes en primer plano, por encima de todo, para dificultar la visibilidad
+  for (const c of clouds) drawCloudShape(ctx, c.x, c.y, c.w, c.h, COLORS.cloud, CFG.cloudOpacity);
+
+
+  ctx.fillStyle = '#111';
+  ctx.font = 'bold 22px monospace';
+  ctx.fillText('METERS: ' + Math.floor(meters), W-260, 40);
+  ctx.font = '13px monospace';
+  const phase = elapsed < CFG.phaseBirdsOnly ? 'CALMA'
+    : elapsed < CFG.phaseBirdsAndBats ? 'AVES'
+    : elapsed < CFG.phaseAll ? 'AVES + MURCIELAGOS'
+    : 'AVES + MURCIELAGOS + DRON';
+  ctx.fillText('Fase: '+phase, 12, 24);
+  if (player.immunityRemaining > 0) {
+    ctx.fillStyle = COLORS.purple;
+    ctx.font = 'bold 16px monospace';
+    ctx.fillText('INMUNE: ' + player.immunityRemaining.toFixed(1) + 's', 12, 46);
+  }
+
+  if (state === 'ready') {
+    ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+    ctx.font = 'bold 30px monospace'; ctx.fillText('YTUJ RUNNER', W/2, H/2-10);
+    ctx.font = '16px monospace'; ctx.fillText('Clic / Espacio / Tap para empezar', W/2, H/2+26);
+    ctx.textAlign = 'left';
+  }
+
+  if (state === 'dead') {
+    ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+    ctx.font = 'bold 36px monospace'; ctx.fillText('GAME OVER', W/2, H/2-10);
+    ctx.font = '16px monospace'; ctx.fillText('Clic / Espacio para reiniciar', W/2, H/2+26);
+    ctx.textAlign = 'left';
+  }
+
+  if (state === 'entering_initials') {
+    const L = getInitialsLayout();
+    ctx.fillStyle = 'rgba(10,10,20,0.82)'; ctx.fillRect(0,0,W,H);
+    ctx.textAlign = 'center';
+
+    ctx.fillStyle = '#ffd93d';
+    ctx.font = 'bold 26px monospace';
+    ctx.fillText('¡NUEVO RÉCORD!', W/2, L.boxes[0].y - 78);
+    ctx.fillStyle = '#9fd3ff';
+    ctx.font = '15px monospace';
+    ctx.fillText('METERS: ' + pendingScore, W/2, L.boxes[0].y - 56);
+
+    // cajas de letras
+    for (let i = 0; i < 3; i++) {
+      const b = L.boxes[i];
+      const active = i === initialsActiveSlot;
+      ctx.fillStyle = '#111122';
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.lineWidth = active ? 3 : 2;
+      ctx.strokeStyle = active ? '#ffd93d' : '#383858';
+      ctx.strokeRect(b.x, b.y, b.w, b.h);
+      ctx.fillStyle = active ? '#ffd93d' : '#fff';
+      ctx.font = 'bold 34px monospace';
+      ctx.fillText(initials[i], b.x + b.w/2, b.y + b.h/2 + 12);
+
+      // flechas arriba/abajo de esta letra
+      const up = L.upArrows[i], down = L.downArrows[i];
+      ctx.fillStyle = '#3fa9f5';
+      ctx.fillRect(up.x, up.y, up.w, up.h);
+      ctx.fillRect(down.x, down.y, down.w, down.h);
+      ctx.fillStyle = '#111';
+      ctx.font = 'bold 18px monospace';
+      ctx.fillText('▲', up.x + up.w/2, up.y + up.h/2 + 6);
+      ctx.fillText('▼', down.x + down.w/2, down.y + down.h/2 + 6);
+    }
+
+    // flechas izquierda/derecha para cambiar de hueco
+    ctx.fillStyle = '#3fa9f5';
+    ctx.fillRect(L.leftArrow.x, L.leftArrow.y, L.leftArrow.w, L.leftArrow.h);
+    ctx.fillRect(L.rightArrow.x, L.rightArrow.y, L.rightArrow.w, L.rightArrow.h);
+    ctx.fillStyle = '#111';
+    ctx.font = 'bold 20px monospace';
+    ctx.fillText('◀', L.leftArrow.x + L.leftArrow.w/2, L.leftArrow.y + L.leftArrow.h/2 + 7);
+    ctx.fillText('▶', L.rightArrow.x + L.rightArrow.w/2, L.rightArrow.y + L.rightArrow.h/2 + 7);
+
+    // botón confirmar
+    ctx.fillStyle = '#ffd93d';
+    ctx.fillRect(L.confirmBtn.x, L.confirmBtn.y, L.confirmBtn.w, L.confirmBtn.h);
+    ctx.fillStyle = '#111';
+    ctx.font = 'bold 16px monospace';
+    ctx.fillText('OK', L.confirmBtn.x + L.confirmBtn.w/2, L.confirmBtn.y + L.confirmBtn.h/2 + 6);
+
+    ctx.fillStyle = '#999';
+    ctx.font = '13px monospace';
+    ctx.fillText('Tiempo: ' + Math.ceil(initialsTimer) + 's', W/2, L.confirmBtn.y + L.confirmBtn.h + 30);
+    ctx.textAlign = 'left';
+  }
+
+  if (state === 'leaderboard') {
+    ctx.fillStyle = 'rgba(10,10,20,0.82)'; ctx.fillRect(0,0,W,H);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd93d';
+    ctx.font = 'bold 26px monospace';
+    ctx.fillText('TOP 10', W/2, 70);
+
+    const rowH = 30, startY = 110, colRank = W/2 - 140, colInit = W/2 - 80, colScore = W/2 + 120;
+    if (lastLeaderboard.length === 0) {
+      ctx.fillStyle = '#999';
+      ctx.font = '15px monospace';
+      ctx.fillText('Aún no hay marcas', W/2, startY + 20);
+    } else {
+      ctx.font = '17px monospace';
+      ctx.textAlign = 'left';
+      lastLeaderboard.forEach((e, i) => {
+        const y = startY + i * rowH;
+        ctx.fillStyle = (i === justAddedIndex) ? 'rgba(255,217,61,0.18)' : 'transparent';
+        if (i === justAddedIndex) ctx.fillRect(colRank - 10, y - 20, colScore - colRank + 90, rowH - 4);
+        ctx.fillStyle = '#888';
+        ctx.fillText((i+1) + '.', colRank, y);
+        ctx.fillStyle = (i === justAddedIndex) ? '#ffd93d' : '#ffd93d';
+        ctx.fillText(e.initials, colInit, y);
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'right';
+        ctx.fillText(String(e.score), colScore, y);
+        ctx.textAlign = 'left';
+      });
+    }
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#9fd3ff';
+    ctx.font = '13px monospace';
+    ctx.fillText('Toca / Espacio para continuar', W/2, startY + Math.max(lastLeaderboard.length,1) * rowH + 30);
+    ctx.textAlign = 'left';
+  }
+}
+
+let lastT = performance.now();
+function loop(t) {
+  const dt = Math.min((t-lastT)/1000, 0.05);
+  lastT = t;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+resetGame();
+state = 'ready';
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
