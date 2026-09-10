@@ -207,28 +207,7 @@ Permite probar inmediatamente el nivel y la configuración creados por el jugado
 
 \---
 
-## 🛠️ Tecnologías utilizadas
 
-* HTML5
-* CSS3
-* JavaScript (Vanilla JS)
-* Canvas API
-
-\---
-
-## 🚀 Ejecución
-
-Abrir cualquiera de los siguientes archivos en un navegador moderno:
-
-```text
-pac\_man\_final.html
-space\_invaders\_final.html
-tower\_defense\_final.html
-```
-
-No requiere instalación ni dependencias externas.
-
-\---
 ## 🏃 Ytuj Runner Personalizable
 
 Endless runner vertical/horizontal personalizable: el jugador salta entre edificios que se van generando sin fin mientras esquiva aves, murciélagos y un dron, siguiendo la misma filosofía de personalización que el resto del laboratorio.
@@ -291,7 +270,28 @@ Pantalla de juego independiente que no arranca hasta que el jugador lo decide, p
 ![CAPTURA](imagenes/ytuj_runner4.png)
 
 \---
+## 🛠️ Tecnologías utilizadas
 
+* HTML5
+* CSS3
+* JavaScript (Vanilla JS)
+* Canvas API
+
+\---
+
+## 🚀 Ejecución
+
+Abrir cualquiera de los siguientes archivos en un navegador moderno:
+
+```text
+pac\_man\_final.html
+space\_invaders\_final.html
+tower\_defense\_final.html
+```
+
+No requiere instalación ni dependencias externas.
+
+\---
 ---
 
 ## 🎯 Objetivo del Proyecto
@@ -519,30 +519,6 @@ Test the level and configuration created by the player immediately.
 ![SCREENSHOT](imagenes/tower_defense4.png)
 
 
-
-\---
-
-## 🛠️ Technologies Used
-
-* HTML5
-* CSS3
-* JavaScript (Vanilla JS)
-* Canvas API
-
-\---
-
-## 🚀 Execution
-
-Open any of the following files in a modern browser:
-
-```text
-pac_man_final.html
-space_invaders_final.html
-tower_defense_final.html
-```
-
-No installation or external dependencies required.
-
 \---
 
 ## 🏃 Customizable Ytuj Runner
@@ -607,6 +583,30 @@ A dedicated game screen that doesn't start until the player decides to, instantl
 ![SCREENSHOT](imagenes/ytuj_runner4.png)
 
 \---
+
+
+\---
+
+## 🛠️ Technologies Used
+
+* HTML5
+* CSS3
+* JavaScript (Vanilla JS)
+* Canvas API
+
+\---
+
+## 🚀 Execution
+
+Open any of the following files in a modern browser:
+
+```text
+pac_man_final.html
+space_invaders_final.html
+tower_defense_final.html
+```
+
+No installation or external dependencies required.
 ## 🎯 Project Objective
 
 To demonstrate how classic arcade video games can be transformed into creation and experimentation tools, allowing any user to design their own versions without programming knowledge.
