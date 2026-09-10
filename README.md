@@ -80,6 +80,7 @@ Prueba inmediatamente cualquier configuración creada por el usuario.
 
 ![CAPTURA](imagenes/Pac_man4.png)
 
+\---
 
 ## 🚀 Space Invaders Personalizable
 
@@ -284,9 +285,10 @@ Pantalla de juego independiente que no arranca hasta que el jugador lo decide, p
 Abrir cualquiera de los siguientes archivos en un navegador moderno:
 
 ```text
-pac\_man\_final.html
-space\_invaders\_final.html
-tower\_defense\_final.html
+index.html
+pac_man_final.html
+space_invaders_final.html
+tower_defense_final.html
 ```
 
 No requiere instalación ni dependencias externas.
@@ -395,6 +397,7 @@ Test any configuration created by the user immediately.
 
 ![SCREENSHOT](imagenes/Pac_man4.png)
 
+\---
 
 ## 🚀 Customizable Space Invaders
 
@@ -584,9 +587,6 @@ A dedicated game screen that doesn't start until the player decides to, instantl
 
 \---
 
-
-\---
-
 ## 🛠️ Technologies Used
 
 * HTML5
@@ -601,6 +601,7 @@ A dedicated game screen that doesn't start until the player decides to, instantl
 Open any of the following files in a modern browser:
 
 ```text
+index.html
 pac_man_final.html
 space_invaders_final.html
 tower_defense_final.html
