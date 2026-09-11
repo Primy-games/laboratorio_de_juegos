@@ -74,6 +74,30 @@
     color: var(--accent);
     border-color: var(--accent);
   }
+  .home-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #23233a;
+  border: 1px solid #383858;
+  border-radius: 6px;
+  color: #ccc;
+  text-decoration: none;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.home-btn:hover {
+  background: #3fa9f5;
+  color: #111;
+  border-color: #3fa9f5;
+}
+.home-btn svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
   #tabs button:hover:not(.active){ color: var(--text); }
 
   .screen{ display:none; flex-direction:column; align-items:center; width:100%; overflow-y: auto; max-height: 100vh; }
@@ -272,6 +296,7 @@
   <button id="tabDecor">2. DECORATIVOS</button>
   <button id="tabConfig">3. CONFIGURACIÓN</button>
   <button id="tabGame">4. JUGAR</button>
+   <a class="home-btn" href="index.html" title="Volver al inicio"> <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"> <path d="M3 10 L10 3.5 L17 10"/> <path d="M5.5 8.5 V16.5 H14.5 V8.5"/> <path d="M8.2 16.5 V12 H11.8 V16.5"/> </svg> </a>
 </div>
 
 <!-- ======================= SPRITE EDITOR ======================= -->
